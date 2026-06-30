@@ -323,38 +323,33 @@ export default function CardsPage() {
         }
 
         /* ── 아치형 카드 펼치기 ── */
+        /* 총 가로 폭 ≈ card-w × 4.23 → 콘텐츠 폭(100% - 40px 패딩)에 맞춤 */
         .spread {
+          --card-w: min(225px, calc(23vw - 10px));
           position: relative;
           width: 100%;
-          height: 320px;
+          /* 높이 = 카드 상단까지의 피벗 거리 (card-w × 2.1) */
+          height: calc(var(--card-w) * 2.1);
           overflow: visible;
-          margin-bottom: 60px;
+          margin-bottom: 40px;
         }
         .card-slot {
           position: absolute;
           bottom: 0;
           left: 50%;
-          width: 120px;
-          margin-left: -60px;
-          /* 회전 중심: 카드 수평 중앙, 카드 하단 72px 아래 */
-          transform-origin: 60px 252px;
+          width: var(--card-w);
+          margin-left: calc(var(--card-w) / -2);
+          /* 회전 중심: 카드 수평 중앙, 카드 하단 (card-w × 0.6) 아래 */
+          transform-origin: calc(var(--card-w) / 2) calc(var(--card-w) * 2.1);
           transform: rotate(var(--angle)) translateY(0) scale(1);
           transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .card-slot:hover {
-          transform: rotate(var(--angle)) translateY(-26px) scale(1.07) !important;
+          transform: rotate(var(--angle)) translateY(calc(var(--card-w) * -0.22)) scale(1.06) !important;
           z-index: 100 !important;
         }
         .card-slot.is-flipped {
           z-index: 50 !important;
-        }
-        @media (max-width: 600px) {
-          .spread { height: 220px; margin-bottom: 40px; }
-          .card-slot {
-            width: 82px;
-            margin-left: -41px;
-            transform-origin: 41px 173px;
-          }
         }
 
         /* 결과 모달 */
