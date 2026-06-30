@@ -43,6 +43,7 @@ export function AnswerDrawer({
   const { error: recError, start, stop } = useRecorder();
   const [phase, setPhase] = useState<Phase>(existing ? "done" : "intro");
   const [flipped, setFlipped] = useState(false);
+  const [sparkle, setSparkle] = useState(false);
   const [timer, setTimer] = useState(0);
   const [transcript, setTranscript] = useState(existing?.transcript ?? "");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(
@@ -52,8 +53,10 @@ export function AnswerDrawer({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    const t = setTimeout(() => setFlipped(true), 60);
-    return () => clearTimeout(t);
+    const t1 = setTimeout(() => setFlipped(true), 60);
+    const t2 = setTimeout(() => setSparkle(true), 800);   // 플립 완료 직후
+    const t3 = setTimeout(() => setSparkle(false), 1500); // 애니메이션 끝나면 제거
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   function clearTimer() {
@@ -137,6 +140,15 @@ export function AnswerDrawer({
         className={`card-wrap${flipped ? " flipped" : ""}`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ── 반짝이 효과: 플립 완료 직후 터짐 ── */}
+        {sparkle && (
+          <div className="sparkle-ring" aria-hidden>
+            {(["✦","✧","✶","✦","✧","✦","✶","✧","✦","✧"] as const).map((ch, i) => (
+              <span key={i} className={`sp sp${i}`}>{ch}</span>
+            ))}
+          </div>
+        )}
+
         <div className="card-inner">
 
           {/* ── 뒷면 ── */}
@@ -271,6 +283,48 @@ export function AnswerDrawer({
           animation: fade 0.2s ease;
         }
         @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ── 반짝이 ── */
+        .sparkle-ring {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          z-index: 20;
+          overflow: visible;
+        }
+        .sp {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          margin: -9px 0 0 -9px;
+          color: var(--gold-bright);
+          text-shadow: 0 0 10px rgba(201,162,75,0.9), 0 0 20px rgba(201,162,75,0.5);
+          animation-duration: 0.65s;
+          animation-timing-function: ease-out;
+          animation-fill-mode: forwards;
+          opacity: 0;
+        }
+        .sp0  { font-size:16px; animation-name:sp-nw;  animation-delay:  0ms; }
+        .sp1  { font-size:22px; animation-name:sp-n;   animation-delay: 50ms; }
+        .sp2  { font-size:13px; animation-name:sp-ne;  animation-delay: 30ms; }
+        .sp3  { font-size:18px; animation-name:sp-e;   animation-delay: 80ms; }
+        .sp4  { font-size:11px; animation-name:sp-se;  animation-delay: 20ms; }
+        .sp5  { font-size:16px; animation-name:sp-s;   animation-delay: 60ms; }
+        .sp6  { font-size:20px; animation-name:sp-sw;  animation-delay: 10ms; }
+        .sp7  { font-size:13px; animation-name:sp-w;   animation-delay: 70ms; }
+        .sp8  { font-size:10px; animation-name:sp-nne; animation-delay: 40ms; }
+        .sp9  { font-size:12px; animation-name:sp-ssw; animation-delay: 90ms; }
+
+        @keyframes sp-nw  { 0%{opacity:1;transform:translate(0,0) scale(1.3)} 100%{opacity:0;transform:translate(-75px,-90px) scale(0.2)} }
+        @keyframes sp-n   { 0%{opacity:1;transform:translate(0,0) scale(1.5)} 100%{opacity:0;transform:translate(5px,-115px) scale(0.2)} }
+        @keyframes sp-ne  { 0%{opacity:1;transform:translate(0,0) scale(1.2)} 100%{opacity:0;transform:translate(75px,-90px) scale(0.2)} }
+        @keyframes sp-e   { 0%{opacity:1;transform:translate(0,0) scale(1.4)} 100%{opacity:0;transform:translate(105px,-15px) scale(0.2)} }
+        @keyframes sp-se  { 0%{opacity:1;transform:translate(0,0) scale(1.1)} 100%{opacity:0;transform:translate(70px, 85px) scale(0.2)} }
+        @keyframes sp-s   { 0%{opacity:1;transform:translate(0,0) scale(1.4)} 100%{opacity:0;transform:translate(10px, 115px) scale(0.2)} }
+        @keyframes sp-sw  { 0%{opacity:1;transform:translate(0,0) scale(1.5)} 100%{opacity:0;transform:translate(-70px, 85px) scale(0.2)} }
+        @keyframes sp-w   { 0%{opacity:1;transform:translate(0,0) scale(1.2)} 100%{opacity:0;transform:translate(-105px,-15px) scale(0.2)} }
+        @keyframes sp-nne { 0%{opacity:1;transform:translate(0,0) scale(1.0)} 100%{opacity:0;transform:translate(45px,-100px) scale(0.2)} }
+        @keyframes sp-ssw { 0%{opacity:1;transform:translate(0,0) scale(1.0)} 100%{opacity:0;transform:translate(-45px, 100px) scale(0.2)} }
 
         /* ── 3D flip wrapper ── */
         .card-wrap {
