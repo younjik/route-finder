@@ -21,10 +21,7 @@
 html, body {
   overflow-x: hidden; /* 아치형 카드 full-vw 확장 시 가로 스크롤 방지 */
   background:
-    radial-gradient(1200px 820px at 50% -8%, rgba(243,182,224,0.20), transparent 62%),
-    radial-gradient(1000px 700px at 12% 6%, rgba(216,110,176,0.18), transparent 58%),
-    radial-gradient(1000px 700px at 88% 96%, rgba(140,80,200,0.22), transparent 58%),
-    linear-gradient(180deg, #2c1356 0%, #241044 55%, #1c0c38 100%);
+    url('/마법진.png') center center / cover no-repeat fixed;
   color: var(--parchment);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
