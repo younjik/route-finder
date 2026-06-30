@@ -18,25 +18,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 키가 없으면 데모 모드: Claude 호출 없이 샘플 평가 반환
-    // (실제 API를 연결하지 않고 결과 화면을 확인하기 위한 용도)
-    if (!process.env.ANTHROPIC_API_KEY) {
-      const demo: Evaluation = {
-        score: 7,
-        strengths: [
-          "질문 의도를 정확히 파악하고 답변의 방향을 잡았습니다.",
-          "구체적인 경험 사례를 들어 설득력을 높였습니다.",
-        ],
-        improvements: [
-          "결론을 먼저 말한 뒤 근거를 덧붙이는 두괄식 구조로 다듬어 보세요.",
-          "성과를 수치나 결과로 제시하면 더 강한 인상을 줄 수 있습니다.",
-        ],
-        summary:
-          "[데모 모드] ANTHROPIC_API_KEY를 연결하면 실제 답변 내용을 분석한 맞춤 평가가 제공됩니다. 지금은 화면 구성 확인용 샘플 평가입니다.",
-      };
-      return NextResponse.json(demo);
-    }
-
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
       max_tokens: 1500,

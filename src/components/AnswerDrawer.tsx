@@ -95,6 +95,7 @@ export function AnswerDrawer({
       setError(e.message);
       return;
     }
+
     setPhase("transcribing");
     try {
       // STT

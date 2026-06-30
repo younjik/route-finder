@@ -4,6 +4,7 @@ import { parseUpload } from "@/lib/parse";
 import { ARCANA } from "@/lib/arcana";
 import type { GenerateResult } from "@/lib/types";
 
+
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -20,29 +21,6 @@ export async function POST(req: NextRequest) {
         { error: "자소서와 채용공고를 모두 업로드해 주세요." },
         { status: 400 }
       );
-    }
-
-    // 키가 없으면 데모 모드: 파일 파싱/Claude 호출 없이 목업 질문 10개 반환
-    // (실제 API를 연결하지 않고 UI 흐름을 확인하기 위한 용도)
-    if (!process.env.ANTHROPIC_API_KEY) {
-      const demoCategories = [
-        "직무역량", "문제해결", "협업", "리더십", "조직적합성",
-        "우선순위", "목표달성", "위기극복", "자기성찰", "변화적응",
-      ];
-      const result: GenerateResult = {
-        keywords: ["데모모드", "직무이해", "커뮤니케이션", "성장경험", "문제해결", "팀워크", "주도성"],
-        questions: ARCANA.map((arc, i) => ({
-          id: i,
-          arcana: arc.name,
-          arcanaKo: arc.nameKo,
-          category: demoCategories[i] ?? "면접",
-          question:
-            `[데모 질문 ${i + 1}] ${arc.nameKo} — ${arc.hint}에 관한 질문입니다. ` +
-            `본인의 경험 중 '${arc.hint}'을(를) 가장 잘 보여줄 수 있는 사례를 구체적으로 설명해 주세요. ` +
-            `(실제 키 연결 시 자소서·채용공고 기반 맞춤 질문으로 대체됩니다.)`,
-        })),
-      };
-      return NextResponse.json(result);
     }
 
     const resume = await parseUpload(resumeFile);
