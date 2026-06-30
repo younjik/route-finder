@@ -17,9 +17,26 @@
 
 ```bash
 npm install
-cp .env.local.example .env.local   # 키 입력
-npm run dev                        # http://localhost:3000
+npm run dev                        # http://localhost:3000  ← 키 없이 바로 데모 모드로 동작
 ```
+
+키를 연결해 실제 Claude·Clova를 쓰려면:
+
+```bash
+cp .env.local.example .env.local   # 키 입력 후 서버 재시작
+```
+
+## 데모 모드 (키 없이 화면 확인)
+
+`.env.local` 없이 실행하면 모든 API가 **데모 폴백**으로 동작해, 외부 호출 없이 전체 화면·흐름을 둘러볼 수 있습니다.
+
+| 라우트 | 키 없을 때 동작 |
+|--------|----------------|
+| `/api/generate` | 파일 파싱·Claude 호출 없이 타로 카드에 매핑된 **데모 질문 10개** 반환 |
+| `/api/evaluate` | Claude 호출 없이 **샘플 평가**(점수·잘한 점·개선점·총평) 반환 |
+| `/api/stt` | Clova 호출 없이 **안내 텍스트** 반환 |
+
+> 각 라우트는 `if (!process.env.ANTHROPIC_API_KEY)` / 키 존재 여부로 분기하므로, `.env.local`에 키만 넣으면 **코드 수정 없이** 곧바로 실제 API 경로로 전환됩니다.
 
 ## 환경변수 (`.env.local`)
 
@@ -29,7 +46,7 @@ npm run dev                        # http://localhost:3000
 | `CLOVA_SPEECH_INVOKE_URL` | Naver Clova Speech(CSR) Invoke URL |
 | `CLOVA_SPEECH_SECRET` | Clova Speech Secret Key |
 
-> Clova 키가 없어도 UI는 **데모 모드**로 동작합니다(녹음→안내 텍스트→Claude 평가까지 흐름 확인 가능). 실제 한국어 음성 인식은 키 설정 후 동작합니다.
+> 키는 `.gitignore`에 의해 커밋되지 않습니다(`.env*.local`). 저장소에는 플레이스홀더 템플릿(`.env.local.example`)만 올라갑니다.
 
 ## 구조
 
