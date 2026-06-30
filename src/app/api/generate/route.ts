@@ -64,15 +64,18 @@ export async function POST(req: NextRequest) {
       type: "text",
       text:
         "\n\n반드시 아래 JSON 형식으로만 응답하세요. 마크다운 코드펜스나 다른 설명 없이 JSON 객체 하나만 출력합니다.\n" +
-        "10개의 질문은 아래 10장의 타로 카드 순서(index 0~9)에 1:1로 매핑하세요. 카드 테마와 질문 성격을 최대한 어울리게 배치하세요.\n\n" +
+        "10개의 질문은 아래 10장의 타로 카드 순서(index 0~9)에 1:1로 매핑하세요. 카드 테마와 질문 성격을 최대한 어울리게 배치하세요.\n" +
+        "10개 중 정확히 5개는 difficulty를 \"advanced\"로, 나머지 5개는 \"normal\"로 설정하세요. " +
+        "\"advanced\" 질문은 지원자의 자소서·공고를 깊이 파고드는 날카로운 심화 질문으로 만드세요.\n\n" +
         `타로 카드:\n${arcanaList}\n\n` +
         `{
   "keywords": ["키워드1", "키워드2", ...],   // 6~10개
   "questions": [
     {
-      "id": 0,                  // 카드 index와 동일 (0~9)
-      "category": "직무역량",    // 질문 영역
-      "question": "..."         // 한국어 면접 질문 (구체적으로)
+      "id": 0,                    // 카드 index와 동일 (0~9)
+      "category": "직무역량",      // 질문 영역
+      "difficulty": "normal",     // "normal" 또는 "advanced" (전체 10개 중 5개가 advanced)
+      "question": "..."           // 한국어 면접 질문 (구체적으로)
     }
     // ... 총 10개, id 0부터 9까지
   ]
@@ -110,6 +113,7 @@ export async function POST(req: NextRequest) {
           arcana: arc.name,
           arcanaKo: arc.nameKo,
           category: q.category ?? "면접",
+          difficulty: q.difficulty === "advanced" ? "advanced" : "normal",
           question: q.question ?? "",
         };
       }),
