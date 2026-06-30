@@ -357,14 +357,26 @@ export default function CardsPage() {
         .smoke {
           position: fixed;
           bottom: 0;
-          width: 260px;
+          width: 320px;
           height: 100vh;
           pointer-events: none;
           z-index: 2;
-          overflow: hidden;
+          /* 바깥(0%) → 완전히 보임, 안쪽(100%) → 투명하게 페이드 */
+          -webkit-mask-image: linear-gradient(
+            to right,
+            black 0%,
+            black 45%,
+            transparent 100%
+          );
+          mask-image: linear-gradient(
+            to right,
+            black 0%,
+            black 45%,
+            transparent 100%
+          );
         }
         .smoke-l { left: 0; }
-        /* 오른쪽은 왼쪽 패턴을 수평으로 반전 */
+        /* 오른쪽은 왼쪽 패턴을 수평으로 반전 (mask도 함께 반전됨) */
         .smoke-r { right: 0; transform: scaleX(-1); }
 
         .puff {
