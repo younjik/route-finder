@@ -323,13 +323,15 @@ export default function CardsPage() {
         }
 
         /* ── 아치형 카드 펼치기 ── */
-        /* 총 가로 폭 ≈ card-w × 4.23 → 콘텐츠 폭(100% - 40px 패딩)에 맞춤 */
+        /* max-width 컨테이너를 벗어나 뷰포트 전체 폭 사용 */
+        /* 총 가로 폭 ≈ card-w × 4.23 → 23vw 기준으로 ~97% 화면 커버 */
         .spread {
-          --card-w: min(225px, calc(23vw - 10px));
+          --card-w: min(300px, 23vw);
           position: relative;
-          width: 100%;
-          /* 높이 = 카드 상단까지의 피벗 거리 (card-w × 2.1) */
-          height: calc(var(--card-w) * 2.1);
+          /* .page max-width 컨테이너 탈출: 50% = 콘텐츠 중앙, 50vw = 뷰포트 중앙 */
+          width: 100vw;
+          margin-left: calc(50% - 50vw);
+          height: calc(var(--card-w) * 1.7);
           overflow: visible;
           margin-bottom: 40px;
         }

@@ -19,6 +19,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
+  overflow-x: hidden; /* 아치형 카드 full-vw 확장 시 가로 스크롤 방지 */
   background:
     radial-gradient(1200px 820px at 50% -8%, rgba(243,182,224,0.20), transparent 62%),
     radial-gradient(1000px 700px at 12% 6%, rgba(216,110,176,0.18), transparent 58%),
