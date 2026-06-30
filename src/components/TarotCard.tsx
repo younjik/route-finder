@@ -9,6 +9,7 @@ export function TarotCard({
   answered,
   advanced,
   score,
+  category,
   onClick,
 }: {
   arc: ArcanaMeta;
@@ -17,6 +18,7 @@ export function TarotCard({
   answered: boolean;
   advanced?: boolean;
   score?: number;
+  category?: string;
   onClick: () => void;
 }) {
   return (

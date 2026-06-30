@@ -54,10 +54,18 @@ export function AnswerDrawer({
 
   useEffect(() => {
     const t1 = setTimeout(() => setFlipped(true), 60);
-    const t2 = setTimeout(() => setSparkle(true), 800);   // 플립 완료 직후
-    const t3 = setTimeout(() => setSparkle(false), 1500); // 애니메이션 끝나면 제거
+    const t2 = setTimeout(() => setSparkle(true), 800);
+    const t3 = setTimeout(() => setSparkle(false), 1500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   function clearTimer() {
     if (intervalRef.current) clearInterval(intervalRef.current);
