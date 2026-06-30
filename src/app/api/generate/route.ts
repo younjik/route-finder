@@ -25,26 +25,67 @@ export async function POST(req: NextRequest) {
     // 키가 없으면 데모 모드: 파일 파싱/Claude 호출 없이 목업 질문 10개 반환
     // (실제 API를 연결하지 않고 UI 흐름을 확인하기 위한 용도)
     if (!process.env.ANTHROPIC_API_KEY) {
-      const demoCategories = [
-        "직무역량", "문제해결", "협업", "리더십", "조직적합성",
-        "우선순위", "목표달성", "위기극복", "자기성찰", "변화적응",
-      ];
-      // 10장 중 5장을 무작위로 심화 질문으로 지정
-      const advancedIds = new Set(
-        [...Array(10).keys()].sort(() => Math.random() - 0.5).slice(0, 5)
-      );
+      // 심화 질문 고정 (홀수 인덱스 5장: 여사제·황제·연인·힘·운명의 수레바퀴)
+      const demoQuestions: Record<number, { category: string; difficulty: "normal" | "advanced"; question: string }> = {
+        0: {
+          category: "직무역량",
+          difficulty: "normal",
+          question: "본인이 가진 핵심 직무 역량 중 가장 자신 있는 것을 하나 꼽고, 실제 업무나 프로젝트에서 어떻게 발휘했는지 구체적인 사례로 설명해 주세요.",
+        },
+        1: {
+          category: "문제 인식",
+          difficulty: "advanced",
+          question: "팀원이나 상사도 인지하지 못했던 잠재적 문제를 먼저 발견하고 선제적으로 해결한 경험이 있나요? 당시 어떤 신호를 통해 문제를 감지했고, 어떻게 설득해 행동으로 옮겼나요?",
+        },
+        2: {
+          category: "협업",
+          difficulty: "normal",
+          question: "서로 다른 배경이나 의견을 가진 팀원들과 협력해 성과를 낸 경험을 말씀해 주세요. 갈등이 있었다면 어떻게 조율했나요?",
+        },
+        3: {
+          category: "리더십",
+          difficulty: "advanced",
+          question: "책임자로서 팀 전체의 이익과 개인 구성원의 요구가 충돌한 상황을 경험한 적 있나요? 어떤 기준으로 판단했고, 그 결정이 팀에 어떤 영향을 미쳤나요?",
+        },
+        4: {
+          category: "조직적합성",
+          difficulty: "normal",
+          question: "본인의 가치관과 조직의 방향이 어긋난다고 느꼈던 순간이 있었나요? 그 상황에서 어떻게 대처했는지 말씀해 주세요.",
+        },
+        5: {
+          category: "우선순위",
+          difficulty: "advanced",
+          question: "여러 업무가 동시에 긴급하게 요구된 상황에서, 자신만의 기준으로 선택을 내린 경험을 말씀해 주세요. 그 선택으로 인해 희생된 것이 있었다면 어떻게 감당했나요?",
+        },
+        6: {
+          category: "목표달성",
+          difficulty: "normal",
+          question: "스스로 목표를 설정하고 끝까지 밀어붙여 달성한 경험을 말씀해 주세요. 중간에 어떤 어려움이 있었고 어떻게 극복했나요?",
+        },
+        7: {
+          category: "위기극복",
+          difficulty: "advanced",
+          question: "본인의 능력이나 판단이 도마 위에 올랐던 가장 힘든 순간은 언제였나요? 당시 감정을 어떻게 통제하고 상황을 타개했는지, 그 경험이 지금의 당신에게 어떤 영향을 주었는지 말씀해 주세요.",
+        },
+        8: {
+          category: "자기성찰",
+          difficulty: "normal",
+          question: "과거의 실패나 아쉬운 경험을 돌아보았을 때, 그 경험에서 무엇을 배웠고 이후 어떻게 행동이 달라졌나요?",
+        },
+        9: {
+          category: "변화적응",
+          difficulty: "advanced",
+          question: "예상치 못한 환경 변화(조직 개편, 기술 전환, 프로젝트 방향 급변 등)로 기존 계획을 완전히 바꿔야 했던 경험이 있나요? 어떻게 빠르게 적응했고, 그 과정에서 무엇을 배웠나요?",
+        },
+      };
+
       const result: GenerateResult = {
-        keywords: ["데모모드", "직무이해", "커뮤니케이션", "성장경험", "문제해결", "팀워크", "주도성"],
+        keywords: ["직무이해", "커뮤니케이션", "성장경험", "문제해결", "팀워크", "주도성"],
         questions: ARCANA.map((arc, i) => ({
           id: i,
           arcana: arc.name,
           arcanaKo: arc.nameKo,
-          category: demoCategories[i] ?? "면접",
-          difficulty: advancedIds.has(i) ? "advanced" : "normal",
-          question:
-            `[데모 질문 ${i + 1}] ${arc.nameKo} — ${arc.hint}에 관한 질문입니다. ` +
-            `본인의 경험 중 '${arc.hint}'을(를) 가장 잘 보여줄 수 있는 사례를 구체적으로 설명해 주세요. ` +
-            `(실제 키 연결 시 자소서·채용공고 기반 맞춤 질문으로 대체됩니다.)`,
+          ...demoQuestions[i],
         })),
       };
       return NextResponse.json(result);
