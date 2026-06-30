@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ARCANA } from "@/lib/arcana";
 import { TarotCard } from "@/components/TarotCard";
@@ -159,17 +159,24 @@ export default function CardsPage() {
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
+          const angle = -65 + i * (130 / 9);
+          const zIdx = Math.round(10 - Math.abs(i - 4.5));
           return (
-            <TarotCard
+            <div
               key={i}
-              arc={arc}
-              index={i}
-              flipped={flipped.has(i)}
-              answered={!!ans}
-              advanced={q?.difficulty === "advanced"}
-              score={ans?.evaluation.score}
-              onClick={() => handleCardClick(q?.id ?? i)}
-            />
+              className={`card-slot${flipped.has(i) ? " is-flipped" : ""}`}
+              style={{ "--angle": `${angle.toFixed(1)}deg`, zIndex: zIdx } as React.CSSProperties}
+            >
+              <TarotCard
+                arc={arc}
+                index={i}
+                flipped={flipped.has(i)}
+                answered={!!ans}
+                advanced={q?.difficulty === "advanced"}
+                score={ans?.evaluation.score}
+                onClick={() => handleCardClick(q?.id ?? i)}
+              />
+            </div>
           );
         })}
       </section>
@@ -315,16 +322,39 @@ export default function CardsPage() {
           background: rgba(201,162,75,0.06);
         }
 
+        /* ── 아치형 카드 펼치기 ── */
         .spread {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 16px;
+          position: relative;
+          width: 100%;
+          height: 320px;
+          overflow: visible;
+          margin-bottom: 60px;
         }
-        @media (max-width: 720px) {
-          .spread { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .card-slot {
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          width: 120px;
+          margin-left: -60px;
+          /* 회전 중심: 카드 수평 중앙, 카드 하단 72px 아래 */
+          transform-origin: 60px 252px;
+          transform: rotate(var(--angle)) translateY(0) scale(1);
+          transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        @media (max-width: 420px) {
-          .spread { grid-template-columns: repeat(2, 1fr); }
+        .card-slot:hover {
+          transform: rotate(var(--angle)) translateY(-26px) scale(1.07) !important;
+          z-index: 100 !important;
+        }
+        .card-slot.is-flipped {
+          z-index: 50 !important;
+        }
+        @media (max-width: 600px) {
+          .spread { height: 220px; margin-bottom: 40px; }
+          .card-slot {
+            width: 82px;
+            margin-left: -41px;
+            transform-origin: 41px 173px;
+          }
         }
 
         /* 결과 모달 */

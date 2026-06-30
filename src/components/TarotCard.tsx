@@ -53,6 +53,8 @@ export function TarotCard({
         .card {
           all: unset;
           cursor: pointer;
+          display: block;
+          width: 100%;
           aspect-ratio: 2 / 3;
           perspective: 1200px;
           animation: deal 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
