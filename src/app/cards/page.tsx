@@ -432,73 +432,55 @@ export default function CardsPage() {
 
         .puff {
           position: absolute;
-          bottom: -20%;
+          bottom: -15%;
           border-radius: 50%;
-          filter: blur(52px);
+          filter: blur(50px);
           background: radial-gradient(
-            circle at 50% 65%,
-            rgba(248, 240, 255, 0.76) 0%,
-            rgba(230, 210, 255, 0.1) 40%,
-            transparent 70%
+            circle at 50% 60%,
+            rgba(248, 240, 255, 0.28) 0%,
+            rgba(230, 210, 255, 0.12) 45%,
+            transparent 72%
           );
           animation: smoke-rise linear infinite;
-          animation-duration: calc(10s + var(--i) * 1.4s);
-          /* 음수 딜레이로 각 퍼프가 이미 다른 위상에서 시작 */
-          animation-delay: calc(var(--i) * -2.4s);
+          animation-duration: calc(11s + var(--i) * 1.6s);
+          /* 각 퍼프가 다른 위상에서 시작 → 독립적으로 흔들리는 효과 */
+          animation-delay: calc(var(--i) * -2.8s);
         }
-        /* 각 퍼프별 크기·위치 차별화 */
-        .puff:nth-child(1) {
-          width: 220px;
-          height: 280px;
-          left: -40px;
-        }
-        .puff:nth-child(2) {
-          width: 170px;
-          height: 340px;
-          left: 65px;
-        }
-        .puff:nth-child(3) {
-          width: 260px;
-          height: 210px;
-          left: -15px;
-        }
-        .puff:nth-child(4) {
-          width: 150px;
-          height: 310px;
-          left: 100px;
-        }
-        .puff:nth-child(5) {
-          width: 230px;
-          height: 250px;
-          left: 10px;
-        }
-        .puff:nth-child(6) {
-          width: 190px;
-          height: 290px;
-          left: 55px;
-        }
+        /* 각 퍼프별 크기·위치 차별화 — 높이를 넉넉하게 */
+        .puff:nth-child(1) { width: 240px; height: 460px; left: -40px; }
+        .puff:nth-child(2) { width: 190px; height: 530px; left:  65px; }
+        .puff:nth-child(3) { width: 280px; height: 400px; left: -20px; }
+        .puff:nth-child(4) { width: 165px; height: 500px; left: 105px; }
+        .puff:nth-child(5) { width: 255px; height: 440px; left:  10px; }
+        .puff:nth-child(6) { width: 210px; height: 480px; left:  60px; }
 
         @keyframes smoke-rise {
-          0% {
-            transform: translateY(0) scaleX(0.7) rotate(-3deg);
+          0%   {
+            transform: translateY(0)      translateX(0px)   scaleX(0.7)  rotate(-4deg);
             opacity: 0;
           }
-          8% {
-            opacity: 0.9;
+          6%   { opacity: 1; }
+          18%  {
+            transform: translateY(-15vh)  translateX(44px)  scaleX(0.85) rotate( 6deg);
           }
-          35% {
-            transform: translateY(-32vh) scaleX(1.1) rotate(2deg);
-            opacity: 0.75;
+          36%  {
+            transform: translateY(-33vh)  translateX(-48px) scaleX(1.1)  rotate(-6deg);
+            opacity: 0.85;
           }
-          65% {
-            transform: translateY(-62vh) scaleX(1.5) rotate(-2deg);
-            opacity: 0.45;
+          54%  {
+            transform: translateY(-52vh)  translateX(40px)  scaleX(1.4)  rotate( 5deg);
+            opacity: 0.55;
           }
-          90% {
-            opacity: 0.15;
+          72%  {
+            transform: translateY(-72vh)  translateX(-34px) scaleX(1.7)  rotate(-4deg);
+            opacity: 0.3;
+          }
+          88%  {
+            transform: translateY(-92vh)  translateX(22px)  scaleX(1.95) rotate( 2deg);
+            opacity: 0.1;
           }
           100% {
-            transform: translateY(-108vh) scaleX(2) rotate(3deg);
+            transform: translateY(-116vh) translateX(-10px) scaleX(2.2)  rotate(-1deg);
             opacity: 0;
           }
         }
