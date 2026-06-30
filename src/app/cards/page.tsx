@@ -166,6 +166,7 @@ export default function CardsPage() {
               index={i}
               flipped={flipped.has(i)}
               answered={!!ans}
+              advanced={q?.difficulty === "advanced"}
               score={ans?.evaluation.score}
               onClick={() => handleCardClick(q?.id ?? i)}
             />
