@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ARCANA } from "@/lib/arcana";
 import { TarotCard } from "@/components/TarotCard";
@@ -16,6 +16,14 @@ export default function CardsPage() {
   const [showSummary, setShowSummary] = useState(false);
   const [saving, setSaving] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
+  const spreadRef = useRef<HTMLElement>(null);
+
+  // 스프레드 초기 스크롤: 아치 중앙이 뷰포트 중심에 오도록
+  useEffect(() => {
+    if (!data) return;
+    const el = spreadRef.current;
+    if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+  }, [data]);
 
   // 세션에서 데이터 로드
   useEffect(() => {
@@ -42,7 +50,7 @@ export default function CardsPage() {
   function persistAnswers(map: Record<number, AnsweredCard>) {
     sessionStorage.setItem(
       "interview:answers",
-      JSON.stringify(Object.values(map))
+      JSON.stringify(Object.values(map)),
     );
   }
 
@@ -96,13 +104,18 @@ export default function CardsPage() {
             color: var(--mist);
           }
           .spinner {
-            width: 40px; height: 40px;
+            width: 40px;
+            height: 40px;
             border: 3px solid var(--line);
             border-top-color: var(--gold);
             border-radius: 50%;
             animation: spin 0.9s linear infinite;
           }
-          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
         `}</style>
       </main>
     );
@@ -110,7 +123,7 @@ export default function CardsPage() {
 
   const answeredCount = Object.keys(answers).length;
   const answeredList = Object.values(answers).sort(
-    (a, b) => a.questionId - b.questionId
+    (a, b) => a.questionId - b.questionId,
   );
   const avgScore =
     answeredList.length > 0
@@ -122,8 +135,29 @@ export default function CardsPage() {
 
   const activeQuestion = data.questions.find((q) => q.id === activeId);
 
+  const PUFFS = [0, 1, 2, 3, 4, 5];
+
   return (
     <main className="page">
+      {/* 양쪽 연기 효과 */}
+      <div className="smoke smoke-l" aria-hidden="true">
+        {PUFFS.map((i) => (
+          <span
+            key={i}
+            className="puff"
+            style={{ "--i": i } as React.CSSProperties}
+          />
+        ))}
+      </div>
+      <div className="smoke smoke-r" aria-hidden="true">
+        {PUFFS.map((i) => (
+          <span
+            key={i}
+            className="puff"
+            style={{ "--i": i } as React.CSSProperties}
+          />
+        ))}
+      </div>
       <header className="top">
         <button className="back-btn" onClick={() => router.push("/")}>
           ← 처음으로
@@ -149,28 +183,41 @@ export default function CardsPage() {
         {data.keywords.length > 0 && (
           <div className="keywords">
             {data.keywords.map((k, i) => (
-              <span className="kw" key={i}>#{k}</span>
+              <span className="kw" key={i}>
+                #{k}
+              </span>
             ))}
           </div>
         )}
       </div>
 
-      <section className="spread">
+      <section className="spread" ref={spreadRef}>
+        <div className="arch-content">
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
+          const angle = -65 + i * (130 / 9);
+          const zIdx = Math.round(10 - Math.abs(i - 4.5));
           return (
-            <TarotCard
+            <div
               key={i}
-              arc={arc}
-              index={i}
-              flipped={flipped.has(i)}
-              answered={!!ans}
-              score={ans?.evaluation.score}
-              onClick={() => handleCardClick(q?.id ?? i)}
-            />
+              className={`card-slot${flipped.has(i) ? " is-flipped" : ""}`}
+              style={{ "--angle": `${angle.toFixed(1)}deg`, zIndex: zIdx } as React.CSSProperties}
+            >
+              <TarotCard
+                arc={arc}
+                index={i}
+                flipped={flipped.has(i)}
+                answered={!!ans}
+                advanced={q?.difficulty === "advanced"}
+                score={ans?.evaluation.score}
+                category={q?.category}
+                onClick={() => handleCardClick(q?.id ?? i)}
+              />
+            </div>
           );
         })}
+        </div>
       </section>
 
       {/* 답변 드로어 */}
@@ -188,10 +235,17 @@ export default function CardsPage() {
         <div className="summary-backdrop" onClick={() => setShowSummary(false)}>
           <div className="summary-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-actions">
-              <button className="save-img" onClick={saveAsImage} disabled={saving}>
+              <button
+                className="save-img"
+                onClick={saveAsImage}
+                disabled={saving}
+              >
                 {saving ? "저장 중…" : "📷 사진으로 저장"}
               </button>
-              <button className="close-modal" onClick={() => setShowSummary(false)}>
+              <button
+                className="close-modal"
+                onClick={() => setShowSummary(false)}
+              >
                 ✕
               </button>
             </div>
@@ -252,23 +306,38 @@ export default function CardsPage() {
           justify-content: space-between;
           margin-bottom: 30px;
         }
-        .back-btn, .summary-btn {
-          background: transparent;
-          border: 1px solid var(--line);
+        .back-btn,
+        .summary-btn {
+          background: rgba(18, 8, 40, 0.55);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(238, 160, 214, 0.45);
           color: var(--parchment);
           padding: 9px 16px;
           border-radius: 9px;
           font-size: 13.5px;
-          transition: border-color 0.2s, opacity 0.2s;
+          transition:
+            border-color 0.2s,
+            background 0.2s;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
         }
-        .back-btn:hover, .summary-btn:hover:not(:disabled) { border-color: var(--gold); }
+        .back-btn:hover,
+        .summary-btn:hover:not(:disabled) {
+          border-color: var(--gold-bright);
+          background: rgba(30, 12, 60, 0.7);
+        }
         .summary-btn {
-          color: var(--void);
-          background: linear-gradient(180deg, var(--gold-bright), var(--gold));
-          border: none;
-          font-weight: 600;
+          color: #1a0530;
+          background: linear-gradient(160deg, #f3b6e0, #d98ec9);
+          border: 1px solid rgba(255, 200, 240, 0.6);
+          font-weight: 700;
+          text-shadow: none;
+          box-shadow: 0 2px 16px rgba(217, 142, 201, 0.45);
         }
-        .summary-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .summary-btn:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
         .progress {
           display: flex;
           align-items: baseline;
@@ -278,9 +347,18 @@ export default function CardsPage() {
           font-family: var(--font-display);
           font-size: 26px;
           color: var(--gold-bright);
+          text-shadow: 0 0 16px rgba(243, 182, 224, 0.7);
         }
-        .progress .slash { color: var(--mist); font-size: 15px; }
-        .progress .lbl { font-size: 12px; color: var(--mist); margin-left: 4px; }
+        .progress .slash {
+          color: var(--mist);
+          font-size: 15px;
+        }
+        .progress .lbl {
+          font-size: 12px;
+          color: var(--parchment);
+          margin-left: 4px;
+          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+        }
 
         .intro-band {
           text-align: center;
@@ -289,15 +367,24 @@ export default function CardsPage() {
         .intro-band .eyebrow {
           font-size: 11px;
           letter-spacing: 0.4em;
-          color: var(--gold);
+          color: var(--gold-bright);
           margin-bottom: 12px;
+          text-shadow: 0 0 20px rgba(243, 182, 224, 0.8);
         }
         .intro-band h1 {
           font-size: clamp(26px, 5vw, 40px);
           font-weight: 600;
           margin-bottom: 10px;
+          text-shadow:
+            0 0 60px rgba(243, 182, 224, 0.35),
+            0 2px 4px rgba(0, 0, 0, 0.95),
+            0 4px 16px rgba(0, 0, 0, 0.8);
         }
-        .intro-band p { color: var(--mist); font-size: 14.5px; }
+        .intro-band p {
+          color: #ddd0f5;
+          font-size: 14.5px;
+          text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+        }
         .keywords {
           display: flex;
           flex-wrap: wrap;
@@ -307,23 +394,144 @@ export default function CardsPage() {
         }
         .kw {
           font-size: 12px;
-          color: var(--gold-bright);
-          border: 1px solid var(--line);
-          padding: 4px 11px;
+          color: #f8d0ef;
+          border: 1px solid rgba(238, 160, 214, 0.5);
+          padding: 5px 13px;
           border-radius: 99px;
-          background: rgba(201,162,75,0.06);
+          background: rgba(18, 8, 40, 0.55);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+          text-shadow: 0 0 10px rgba(243, 182, 224, 0.5);
         }
 
+        /* ── 연기 효과 ── */
+        .smoke {
+          position: fixed;
+          bottom: 0;
+          width: 320px;
+          height: 100vh;
+          pointer-events: none;
+          z-index: 2;
+          /* 바깥(0%) → 완전히 보임, 안쪽(100%) → 투명하게 페이드 */
+          -webkit-mask-image: linear-gradient(
+            to right,
+            black 0%,
+            black 45%,
+            transparent 100%
+          );
+          mask-image: linear-gradient(
+            to right,
+            black 0%,
+            black 45%,
+            transparent 100%
+          );
+        }
+        .smoke-l {
+          left: 0;
+        }
+        /* 오른쪽은 왼쪽 패턴을 수평으로 반전 (mask도 함께 반전됨) */
+        .smoke-r {
+          right: 0;
+          transform: scaleX(-1);
+        }
+
+        .puff {
+          position: absolute;
+          bottom: -15%;
+          border-radius: 50%;
+          filter: blur(50px);
+          background: radial-gradient(
+            circle at 50% 60%,
+            rgba(248, 240, 255, 0.28) 0%,
+            rgba(230, 210, 255, 0.12) 45%,
+            transparent 72%
+          );
+          animation: smoke-rise linear infinite;
+          animation-duration: calc(11s + var(--i) * 1.6s);
+          /* 각 퍼프가 다른 위상에서 시작 → 독립적으로 흔들리는 효과 */
+          animation-delay: calc(var(--i) * -2.8s);
+        }
+        /* 각 퍼프별 크기·위치 차별화 — 높이를 넉넉하게 */
+        .puff:nth-child(1) { width: 240px; height: 460px; left: -40px; }
+        .puff:nth-child(2) { width: 190px; height: 530px; left:  65px; }
+        .puff:nth-child(3) { width: 280px; height: 400px; left: -20px; }
+        .puff:nth-child(4) { width: 165px; height: 500px; left: 105px; }
+        .puff:nth-child(5) { width: 255px; height: 440px; left:  10px; }
+        .puff:nth-child(6) { width: 210px; height: 480px; left:  60px; }
+
+        @keyframes smoke-rise {
+          0%   {
+            transform: translateY(0)      translateX(0px)   scaleX(0.7)  rotate(-4deg);
+            opacity: 0;
+          }
+          6%   { opacity: 1; }
+          18%  {
+            transform: translateY(-15vh)  translateX(44px)  scaleX(0.85) rotate( 6deg);
+          }
+          36%  {
+            transform: translateY(-33vh)  translateX(-48px) scaleX(1.1)  rotate(-6deg);
+            opacity: 0.85;
+          }
+          54%  {
+            transform: translateY(-52vh)  translateX(40px)  scaleX(1.4)  rotate( 5deg);
+            opacity: 0.55;
+          }
+          72%  {
+            transform: translateY(-72vh)  translateX(-34px) scaleX(1.7)  rotate(-4deg);
+            opacity: 0.3;
+          }
+          88%  {
+            transform: translateY(-92vh)  translateX(22px)  scaleX(1.95) rotate( 2deg);
+            opacity: 0.1;
+          }
+          100% {
+            transform: translateY(-116vh) translateX(-10px) scaleX(2.2)  rotate(-1deg);
+            opacity: 0;
+          }
+        }
+
+        /* ── 원호형 스크롤 카드 배열 ── */
         .spread {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 16px;
+          --card-w: min(240px, 42vw);
+          --R: 420px;   /* 원의 반지름 */
+          --d: 210px;   /* 원 중심 = 섹션 하단에서 d 아래 */
+          position: relative;
+          width: 100vw;
+          margin-left: calc(50% - 50vw);
+          /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백 */
+          height: calc(var(--R) - var(--d) + var(--card-w) * 1.5 + 30px);
+          overflow-x: auto;
+          overflow-y: hidden;
+          scrollbar-width: none;
+          margin-bottom: 30px;
         }
-        @media (max-width: 720px) {
-          .spread { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .spread::-webkit-scrollbar { display: none; }
+
+        .arch-content {
+          position: relative;
+          height: 100%;
+          /* 좌우 끝 카드(±65°)가 잘리지 않을 최소 너비 */
+          width: max(100%, calc(var(--R) * 1.9 + var(--card-w) + 60px));
         }
-        @media (max-width: 420px) {
-          .spread { grid-template-columns: repeat(2, 1fr); }
+
+        .card-slot {
+          position: absolute;
+          width: var(--card-w);
+          /* 각 카드의 하단 중심을 반지름 R인 원의 호 위에 배치 */
+          left: calc(50% + var(--R) * sin(var(--angle)) - var(--card-w) / 2);
+          bottom: calc(var(--R) * cos(var(--angle)) - var(--d));
+          /* 호의 접선 방향으로 카드 회전 */
+          transform: rotate(var(--angle));
+          transform-origin: center bottom;
+          transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .card-slot:hover {
+          transform: rotate(var(--angle)) translateY(-20px) scale(1.07) !important;
+          z-index: 100 !important;
+        }
+        .card-slot.is-flipped {
+          z-index: 50 !important;
         }
 
         /* 결과 모달 */
@@ -331,7 +539,7 @@ export default function CardsPage() {
           position: fixed;
           inset: 0;
           z-index: 60;
-          background: rgba(7,6,14,0.82);
+          background: rgba(7, 6, 14, 0.82);
           backdrop-filter: blur(6px);
           display: flex;
           align-items: flex-start;
@@ -340,7 +548,14 @@ export default function CardsPage() {
           padding: 28px 16px;
           animation: fade 0.25s ease;
         }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fade {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
         .summary-modal {
           width: 100%;
           max-width: 600px;
@@ -359,26 +574,36 @@ export default function CardsPage() {
           padding: 11px 20px;
           border-radius: 10px;
           font-size: 14px;
-          box-shadow: 0 8px 24px rgba(201,162,75,0.3);
+          box-shadow: 0 8px 24px rgba(201, 162, 75, 0.3);
         }
-        .save-img:disabled { opacity: 0.5; }
+        .save-img:disabled {
+          opacity: 0.5;
+        }
         .close-modal {
           background: transparent;
           border: 1px solid var(--line);
           color: var(--parchment);
-          width: 38px; height: 38px;
+          width: 38px;
+          height: 38px;
           border-radius: 9px;
         }
 
         .capture {
           background:
-            radial-gradient(700px 300px at 50% 0%, rgba(201,162,75,0.1), transparent 60%),
+            radial-gradient(
+              700px 300px at 50% 0%,
+              rgba(201, 162, 75, 0.1),
+              transparent 60%
+            ),
             linear-gradient(180deg, #16132a, #0d0b1c);
           border: 1px solid var(--line);
           border-radius: 18px;
           padding: 34px 28px 24px;
         }
-        .cap-head { text-align: center; margin-bottom: 26px; }
+        .cap-head {
+          text-align: center;
+          margin-bottom: 26px;
+        }
         .cap-eyebrow {
           font-size: 10px;
           letter-spacing: 0.34em;
@@ -396,16 +621,33 @@ export default function CardsPage() {
           justify-content: center;
           gap: 28px;
         }
-        .stat-num { font-size: 40px; color: var(--gold-bright); line-height: 1; }
-        .stat-lbl { font-size: 11px; color: var(--mist); margin-top: 4px; letter-spacing: 0.06em; }
-        .stat-div { width: 1px; height: 44px; background: var(--line); }
+        .stat-num {
+          font-size: 40px;
+          color: var(--gold-bright);
+          line-height: 1;
+        }
+        .stat-lbl {
+          font-size: 11px;
+          color: var(--mist);
+          margin-top: 4px;
+          letter-spacing: 0.06em;
+        }
+        .stat-div {
+          width: 1px;
+          height: 44px;
+          background: var(--line);
+        }
 
-        .cap-list { display: flex; flex-direction: column; gap: 14px; }
+        .cap-list {
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+        }
         .cap-item {
           border: 1px solid var(--line-soft);
           border-radius: 12px;
           padding: 16px 18px;
-          background: rgba(255,255,255,0.02);
+          background: rgba(255, 255, 255, 0.02);
         }
         .cap-item-top {
           display: flex;
@@ -413,7 +655,10 @@ export default function CardsPage() {
           align-items: center;
           margin-bottom: 8px;
         }
-        .cap-arcana { color: var(--gold); font-size: 15px; }
+        .cap-arcana {
+          color: var(--gold);
+          font-size: 15px;
+        }
         .cap-score {
           color: var(--gold-bright);
           font-weight: 700;

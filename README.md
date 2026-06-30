@@ -40,11 +40,11 @@ cp .env.local.example .env.local   # 키 입력 후 서버 재시작
 
 ## 환경변수 (`.env.local`)
 
-| 변수 | 설명 |
-|------|------|
-| `ANTHROPIC_API_KEY` | Anthropic API 키 (질문 생성·평가) |
+| 변수                      | 설명                               |
+| ------------------------- | ---------------------------------- |
+| `ANTHROPIC_API_KEY`       | Anthropic API 키 (질문 생성·평가)  |
 | `CLOVA_SPEECH_INVOKE_URL` | Naver Clova Speech(CSR) Invoke URL |
-| `CLOVA_SPEECH_SECRET` | Clova Speech Secret Key |
+| `CLOVA_SPEECH_SECRET`     | Clova Speech Secret Key            |
 
 > 키는 `.gitignore`에 의해 커밋되지 않습니다(`.env*.local`). 저장소에는 플레이스홀더 템플릿(`.env.local.example`)만 올라갑니다.
 
@@ -70,6 +70,7 @@ src/
 ```
 
 ## 메모
+
 - 상태는 `sessionStorage`에 저장 — 새로고침해도 답변 유지, 처음 화면으로 가면 초기화.
 - 녹음은 브라우저 `MediaRecorder`(webm/mp4) 사용 → 마이크 권한 필요.
 - Clova Speech `recognizer/upload` 동기(sync) 엔드포인트 기준. 콘솔에서 도메인 발급 후 Invoke URL을 그대로 넣으세요.
