@@ -207,6 +207,7 @@ export default function CardsPage() {
                 answered={!!ans}
                 advanced={q?.difficulty === "advanced"}
                 score={ans?.evaluation.score}
+                category={q?.category}
                 onClick={() => handleCardClick(q?.id ?? i)}
               />
             </div>

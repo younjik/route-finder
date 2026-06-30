@@ -43,8 +43,13 @@ export function TarotCard({
             <div className="advanced-mark">✦ 심화</div>
           )}
           <div className="glyph serif">{arc.glyph}</div>
-          <div className="name serif">{arc.nameKo}</div>
-          <div className="name-en">{arc.name}</div>
+          {flipped && category
+            ? <div className="name serif category">{category}</div>
+            : <>
+                <div className="name serif">{arc.nameKo}</div>
+                <div className="name-en">{arc.name}</div>
+              </>
+          }
           {answered && score != null && (
             <div className="score-badge">{score}</div>
           )}
@@ -160,6 +165,12 @@ export function TarotCard({
           letter-spacing: 0.16em;
           color: var(--mist);
           text-transform: uppercase;
+        }
+        .category {
+          font-size: clamp(13px, 3vw, 17px);
+          color: var(--gold-bright);
+          letter-spacing: 0.08em;
+          text-shadow: 0 0 14px rgba(243,182,224,0.5);
         }
         .card.answered .front {
           border-color: var(--gold);
