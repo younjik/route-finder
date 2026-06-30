@@ -493,7 +493,7 @@ export default function CardsPage() {
 
         /* ── 원호형 스크롤 카드 배열 ── */
         .spread {
-          --card-w: min(160px, 28vw);
+          --card-w: min(240px, 42vw);
           --R: 420px;   /* 원의 반지름 */
           --d: 210px;   /* 원 중심 = 섹션 하단에서 d 아래 */
           position: relative;
