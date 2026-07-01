@@ -4,7 +4,13 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRecorder } from "@/lib/useRecorder";
 import type { InterviewQuestion, Evaluation, AnsweredCard } from "@/lib/types";
 
-type Phase = "intro" | "prep" | "recording" | "transcribing" | "evaluating" | "done";
+type Phase =
+  | "intro"
+  | "prep"
+  | "recording"
+  | "transcribing"
+  | "evaluating"
+  | "done";
 
 const PREP_SECONDS = 60;
 const MAX_RECORD_SECONDS = 120;
@@ -23,9 +29,13 @@ function highlightKeywords(text: string, keywords: string[]): React.ReactNode {
   const regex = new RegExp(`(${escaped.join("|")})`, "gi");
   const parts = text.split(regex);
   return parts.map((part, i) =>
-    keywords.some((k) => k.toLowerCase() === part.toLowerCase())
-      ? <mark key={i} className="kw-mark">{part}</mark>
-      : part
+    keywords.some((k) => k.toLowerCase() === part.toLowerCase()) ? (
+      <mark key={i} className="kw-mark">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
   );
 }
 
@@ -46,7 +56,7 @@ export function AnswerDrawer({
   const [timer, setTimer] = useState(0);
   const [transcript, setTranscript] = useState(existing?.transcript ?? "");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(
-    existing?.evaluation ?? null
+    existing?.evaluation ?? null,
   );
   const [error, setError] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -80,13 +90,20 @@ export function AnswerDrawer({
     clearTimer();
     intervalRef.current = setInterval(() => {
       setTimer((t) => {
-        if (t <= 1) { clearTimer(); beginRecording(); return 0; }
+        if (t <= 1) {
+          clearTimer();
+          beginRecording();
+          return 0;
+        }
         return t - 1;
       });
     }, 1000);
   }
 
-  function skipPrep() { clearTimer(); beginRecording(); }
+  function skipPrep() {
+    clearTimer();
+    beginRecording();
+  }
 
   async function beginRecording() {
     try {
@@ -96,7 +113,11 @@ export function AnswerDrawer({
       clearTimer();
       intervalRef.current = setInterval(() => {
         setTimer((t) => {
-          if (t + 1 >= MAX_RECORD_SECONDS) { clearTimer(); finishRecording(); return MAX_RECORD_SECONDS; }
+          if (t + 1 >= MAX_RECORD_SECONDS) {
+            clearTimer();
+            finishRecording();
+            return MAX_RECORD_SECONDS;
+          }
           return t + 1;
         });
       }, 1000);
@@ -145,7 +166,10 @@ export function AnswerDrawer({
         evaluation: ev,
         answeredAt: Date.now(),
       });
-    } catch (e: any) { setError(e.message); setPhase("intro"); }
+    } catch (e: any) {
+      setError(e.message);
+      setPhase("intro");
+    }
   }
 
   return (
@@ -155,13 +179,16 @@ export function AnswerDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="card-inner">
-
           {/* ── 뒷면 ── */}
           <div className="back-face" aria-hidden />
 
           {/* ── 앞면: 질문 & 답변 ── */}
-          <div className={`front-face${question.difficulty === "advanced" ? " advanced" : ""}`}>
-            <button className="close" onClick={onClose} aria-label="닫기">✕</button>
+          <div
+            className={`front-face${question.difficulty === "advanced" ? " advanced" : ""}`}
+          >
+            <button className="close" onClick={onClose} aria-label="닫기">
+              ✕
+            </button>
 
             {/* 타로 카드 헤더 */}
             <div className="card-header">
@@ -191,10 +218,13 @@ export function AnswerDrawer({
               {phase === "intro" && (
                 <div className="stage">
                   <p className="stage-desc">
-                    준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.<br />
+                    준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.
+                    <br />
                     최대 <b>2분</b>까지 답변을 녹음할 수 있어요.
                   </p>
-                  <button className="primary" onClick={beginPrep}>◷ 준비 시작</button>
+                  <button className="primary" onClick={beginPrep}>
+                    ◷ 준비 시작
+                  </button>
                 </div>
               )}
 
@@ -204,7 +234,9 @@ export function AnswerDrawer({
                     <div className="ring-num serif">{fmt(timer)}</div>
                     <div className="ring-label">생각을 정리하세요</div>
                   </div>
-                  <button className="ghost" onClick={skipPrep}>바로 답변 시작 →</button>
+                  <button className="ghost" onClick={skipPrep}>
+                    바로 답변 시작 →
+                  </button>
                 </div>
               )}
 
@@ -235,9 +267,15 @@ export function AnswerDrawer({
               {phase === "done" && evaluation && (
                 <div className="result">
                   <div className="score-row">
-                    <div className="big-score serif">{evaluation.score}<span>/10</span></div>
+                    <div className="big-score serif">
+                      {evaluation.score}
+                      <span>/10</span>
+                    </div>
                     <div className="score-bar">
-                      <div className="score-fill" style={{ width: `${evaluation.score * 10}%` }} />
+                      <div
+                        className="score-fill"
+                        style={{ width: `${evaluation.score * 10}%` }}
+                      />
                     </div>
                   </div>
                   {transcript && (
@@ -249,18 +287,28 @@ export function AnswerDrawer({
                   <div className="feedback">
                     <div className="fb-block good">
                       <h4>잘한 점</h4>
-                      <ul>{evaluation.strengths.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                      <ul>
+                        {evaluation.strengths.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
                     </div>
                     <div className="fb-block improve">
                       <h4>개선할 점</h4>
-                      <ul>{evaluation.improvements.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                      <ul>
+                        {evaluation.improvements.map((s, i) => (
+                          <li key={i}>{s}</li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
                   <div className="summary">
                     <span className="serif quote">"</span>
                     {evaluation.summary}
                   </div>
-                  <button className="ghost" onClick={onClose}>다음 카드 고르기 →</button>
+                  <button className="ghost" onClick={onClose}>
+                    다음 카드 고르기 →
+                  </button>
                 </div>
               )}
             </div>
@@ -282,7 +330,14 @@ export function AnswerDrawer({
           overflow-y: auto;
           animation: fade 0.2s ease;
         }
-        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fade {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
         /* ── 3D flip wrapper ── */
         .card-wrap {
@@ -300,7 +355,9 @@ export function AnswerDrawer({
           transition: transform 0.78s cubic-bezier(0.4, 0.1, 0.2, 1);
           border-radius: 18px;
         }
-        .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+        .card-wrap.flipped .card-inner {
+          transform: rotateY(180deg);
+        }
 
         /* ── 뒷면 ── */
         .back-face {
@@ -308,9 +365,10 @@ export function AnswerDrawer({
           inset: 0;
           backface-visibility: hidden;
           border-radius: 18px;
-          background: #14102b url('/타로 카드 뒷면.png') center center / cover no-repeat;
+          background: #14102b url("/타로 카드 뒷면.png") center center / cover
+            no-repeat;
           border: 1px solid var(--line);
-          box-shadow: 0 28px 70px rgba(0,0,0,0.65);
+          box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
         }
 
         /* ── 앞면 ── */
@@ -321,9 +379,10 @@ export function AnswerDrawer({
           backface-visibility: hidden;
           border-radius: 18px;
           /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
-          background: #15122c url('/앞면 수정.png') center center / cover no-repeat;
+          background: #15122c url("/앞면 수정.png") center center / 110%
+            no-repeat;
           border: 1px solid var(--line);
-          box-shadow: 0 28px 70px rgba(0,0,0,0.65);
+          box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
           padding: 24px 24px 32px;
           overflow-y: auto;
           display: flex;
@@ -343,14 +402,22 @@ export function AnswerDrawer({
         /* ── 심화 질문 금색 카드 ── */
         .front-face.advanced {
           background:
-            radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,162,75,0.38), transparent 65%),
-            radial-gradient(ellipse 60% 40% at 50% 100%, rgba(201,162,75,0.12), transparent 60%),
-            url('/앞면 수정.png') center center / cover no-repeat;
-          border-color: rgba(201,162,75,0.7);
+            radial-gradient(
+              ellipse 80% 50% at 50% 0%,
+              rgba(201, 162, 75, 0.38),
+              transparent 65%
+            ),
+            radial-gradient(
+              ellipse 60% 40% at 50% 100%,
+              rgba(201, 162, 75, 0.12),
+              transparent 60%
+            ),
+            url("/앞면 수정.png") center center / 116% no-repeat;
+          border-color: rgba(201, 162, 75, 0.7);
           box-shadow:
-            0 0 0 1px rgba(201,162,75,0.35),
-            0 28px 70px rgba(201,162,75,0.2),
-            inset 0 1px 0 rgba(201,162,75,0.15);
+            0 0 0 1px rgba(201, 162, 75, 0.35),
+            0 28px 70px rgba(201, 162, 75, 0.2),
+            inset 0 1px 0 rgba(201, 162, 75, 0.15);
         }
         .advanced-badge {
           font-size: 11px;
@@ -360,17 +427,37 @@ export function AnswerDrawer({
           padding: 3px 12px;
           border-radius: 99px;
           font-weight: 700;
-          box-shadow: 0 2px 10px rgba(201,162,75,0.4);
+          box-shadow: 0 2px 10px rgba(201, 162, 75, 0.4);
         }
-        .front-face.advanced .arcana-name { color: var(--gold-bright); opacity: 1; }
-        .front-face.advanced .keyword { color: #ffe8a0; }
-        .front-face.advanced .keyword-deco { color: var(--gold-bright); opacity: 0.8; }
+        .front-face.advanced .arcana-name {
+          color: var(--gold-bright);
+          opacity: 1;
+        }
+        .front-face.advanced .keyword {
+          color: #ffe8a0;
+        }
+        .front-face.advanced .keyword-deco {
+          color: var(--gold-bright);
+          opacity: 0.8;
+        }
         .front-face.advanced .divider-line {
-          background: linear-gradient(90deg, transparent, rgba(201,162,75,0.6), transparent);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(201, 162, 75, 0.6),
+            transparent
+          );
         }
-        .front-face.advanced .q-text { color: #f5e6c0; opacity: 1; }
-        .front-face.advanced .stage-desc { color: rgba(245,230,192,0.7); }
-        .front-face.advanced .stage-desc b { color: var(--gold-bright); }
+        .front-face.advanced .q-text {
+          color: #f5e6c0;
+          opacity: 1;
+        }
+        .front-face.advanced .stage-desc {
+          color: rgba(245, 230, 192, 0.7);
+        }
+        .front-face.advanced .stage-desc b {
+          color: var(--gold-bright);
+        }
 
         .close {
           position: absolute;
@@ -402,7 +489,12 @@ export function AnswerDrawer({
         .divider-line {
           width: 100%;
           height: 1px;
-          background: linear-gradient(90deg, transparent, var(--line), transparent);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            var(--line),
+            transparent
+          );
         }
         .keyword-wrap {
           display: flex;
@@ -416,8 +508,8 @@ export function AnswerDrawer({
           color: var(--gold-bright);
           letter-spacing: 0.12em;
           text-shadow:
-            0 0 30px rgba(201,162,75,0.5),
-            0 0 60px rgba(201,162,75,0.2);
+            0 0 30px rgba(201, 162, 75, 0.5),
+            0 0 60px rgba(201, 162, 75, 0.2);
         }
         .keyword-deco {
           font-size: 20px;
@@ -443,8 +535,8 @@ export function AnswerDrawer({
         }
         .err {
           color: var(--ember);
-          background: rgba(194,84,58,0.1);
-          border: 1px solid rgba(194,84,58,0.3);
+          background: rgba(194, 84, 58, 0.1);
+          border: 1px solid rgba(194, 84, 58, 0.3);
           border-radius: 8px;
           padding: 10px 14px;
           font-size: 13.5px;
@@ -464,9 +556,21 @@ export function AnswerDrawer({
           text-align: center;
           max-width: 420px;
         }
-        .stage-desc b { color: var(--gold-bright); }
-        .pulse { animation: p 1.4s ease-in-out infinite; }
-        @keyframes p { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .stage-desc b {
+          color: var(--gold-bright);
+        }
+        .pulse {
+          animation: p 1.4s ease-in-out infinite;
+        }
+        @keyframes p {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
 
         .ring {
           width: 180px;
@@ -480,23 +584,43 @@ export function AnswerDrawer({
           position: relative;
           border: 2px solid var(--line);
         }
-        .ring.prep { box-shadow: 0 0 0 6px rgba(201,162,75,0.06); }
+        .ring.prep {
+          box-shadow: 0 0 0 6px rgba(201, 162, 75, 0.06);
+        }
         .ring.rec {
           border-color: var(--ember);
           animation: glow 1.6s ease-in-out infinite;
         }
         @keyframes glow {
-          0%,100% { box-shadow: 0 0 30px rgba(194,84,58,0.25); }
-          50% { box-shadow: 0 0 55px rgba(194,84,58,0.5); }
+          0%,
+          100% {
+            box-shadow: 0 0 30px rgba(194, 84, 58, 0.25);
+          }
+          50% {
+            box-shadow: 0 0 55px rgba(194, 84, 58, 0.5);
+          }
         }
-        .ring-num { font-size: 44px; color: var(--parchment); letter-spacing: 0.02em; }
-        .ring-label { font-size: 12px; color: var(--mist); }
+        .ring-num {
+          font-size: 44px;
+          color: var(--parchment);
+          letter-spacing: 0.02em;
+        }
+        .ring-label {
+          font-size: 12px;
+          color: var(--mist);
+        }
         .rec-dot {
-          width: 11px; height: 11px; border-radius: 50%;
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
           background: var(--ember);
           animation: blink 1s steps(2) infinite;
         }
-        @keyframes blink { 50% { opacity: 0.25; } }
+        @keyframes blink {
+          50% {
+            opacity: 0.25;
+          }
+        }
 
         .primary {
           padding: 14px 28px;
@@ -506,15 +630,17 @@ export function AnswerDrawer({
           background: linear-gradient(180deg, var(--gold-bright), var(--gold));
           border: none;
           border-radius: 11px;
-          box-shadow: 0 8px 28px rgba(201,162,75,0.3);
+          box-shadow: 0 8px 28px rgba(201, 162, 75, 0.3);
           transition: transform 0.2s;
           cursor: pointer;
         }
-        .primary:hover { transform: translateY(-2px); }
+        .primary:hover {
+          transform: translateY(-2px);
+        }
         .primary.stop {
           background: linear-gradient(180deg, #d96a50, var(--ember));
           color: var(--parchment);
-          box-shadow: 0 8px 28px rgba(194,84,58,0.35);
+          box-shadow: 0 8px 28px rgba(194, 84, 58, 0.35);
         }
         .ghost {
           background: transparent;
@@ -526,56 +652,130 @@ export function AnswerDrawer({
           transition: border-color 0.2s;
           cursor: pointer;
         }
-        .ghost:hover { border-color: var(--gold); }
+        .ghost:hover {
+          border-color: var(--gold);
+        }
 
         .spinner {
-          width: 44px; height: 44px;
+          width: 44px;
+          height: 44px;
           border: 3px solid var(--line);
           border-top-color: var(--gold);
           border-radius: 50%;
           animation: spin 0.9s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
 
-        .result { display: flex; flex-direction: column; gap: 20px; }
-        .score-row { display: flex; align-items: center; gap: 18px; }
-        .big-score { font-size: 52px; color: var(--gold-bright); line-height: 1; }
-        .big-score span { font-size: 20px; color: var(--mist); }
+        .result {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+        .score-row {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+        }
+        .big-score {
+          font-size: 52px;
+          color: var(--gold-bright);
+          line-height: 1;
+        }
+        .big-score span {
+          font-size: 20px;
+          color: var(--mist);
+        }
         .score-bar {
-          flex: 1; height: 10px;
-          background: rgba(255,255,255,0.07);
-          border-radius: 99px; overflow: hidden;
+          flex: 1;
+          height: 10px;
+          background: rgba(255, 255, 255, 0.07);
+          border-radius: 99px;
+          overflow: hidden;
         }
         .score-fill {
           height: 100%;
           background: linear-gradient(90deg, var(--ember), var(--gold-bright));
           border-radius: 99px;
-          transition: width 0.8s cubic-bezier(0.2,0.8,0.2,1);
+          transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .transcript {
           border: 1px solid var(--line-soft);
           border-radius: 10px;
           padding: 12px 16px;
         }
-        .transcript summary { cursor: pointer; font-size: 13px; color: var(--mist); }
-        .transcript p { margin-top: 10px; font-size: 14px; line-height: 1.7; color: var(--parchment); }
-        .feedback { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-        @media (max-width: 500px) { .feedback { grid-template-columns: 1fr; } }
-        .fb-block { border: 1px solid var(--line-soft); border-radius: 12px; padding: 16px 18px; }
-        .fb-block h4 { font-size: 13px; letter-spacing: 0.04em; margin-bottom: 10px; }
-        .fb-block.good h4 { color: var(--gold-bright); }
-        .fb-block.improve h4 { color: var(--ember); }
-        .fb-block ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .transcript summary {
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--mist);
+        }
+        .transcript p {
+          margin-top: 10px;
+          font-size: 14px;
+          line-height: 1.7;
+          color: var(--parchment);
+        }
+        .feedback {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+        @media (max-width: 500px) {
+          .feedback {
+            grid-template-columns: 1fr;
+          }
+        }
+        .fb-block {
+          border: 1px solid var(--line-soft);
+          border-radius: 12px;
+          padding: 16px 18px;
+        }
+        .fb-block h4 {
+          font-size: 13px;
+          letter-spacing: 0.04em;
+          margin-bottom: 10px;
+        }
+        .fb-block.good h4 {
+          color: var(--gold-bright);
+        }
+        .fb-block.improve h4 {
+          color: var(--ember);
+        }
+        .fb-block ul {
+          list-style: none;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
         .fb-block li {
-          font-size: 13.5px; line-height: 1.6; color: var(--parchment);
-          padding-left: 16px; position: relative;
+          font-size: 13.5px;
+          line-height: 1.6;
+          color: var(--parchment);
+          padding-left: 16px;
+          position: relative;
         }
-        .fb-block li::before { content: "·"; position: absolute; left: 4px; color: var(--gold); }
+        .fb-block li::before {
+          content: "·";
+          position: absolute;
+          left: 4px;
+          color: var(--gold);
+        }
         .summary {
-          font-size: 15px; line-height: 1.7; color: var(--mist);
-          border-left: 2px solid var(--gold); padding-left: 16px;
+          font-size: 15px;
+          line-height: 1.7;
+          color: var(--mist);
+          border-left: 2px solid var(--gold);
+          padding-left: 16px;
         }
-        .summary .quote { color: var(--gold); font-size: 28px; margin-right: 4px; line-height: 0; }
+        .summary .quote {
+          color: var(--gold);
+          font-size: 28px;
+          margin-right: 4px;
+          line-height: 0;
+        }
       `}</style>
     </div>
   );
