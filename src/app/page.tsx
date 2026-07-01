@@ -93,7 +93,7 @@ function FileSlot({
           margin-bottom: 14px;
         }
         .slot-label {
-          font-family: var(--font-display);
+          font-family: "Renaissance Secret", serif;
           font-size: 22px;
           letter-spacing: 0.02em;
           margin-bottom: 6px;
@@ -239,6 +239,20 @@ export default function UploadPage() {
 
   return (
     <main className="wrap">
+      {loading && (
+        <div className="loading-overlay" role="status" aria-live="polite">
+          <div className="deck">
+            <div className="tarot-card c1" />
+            <div className="tarot-card c2" />
+            <div className="tarot-card c3" />
+            <div className="tarot-card c4" />
+            <div className="tarot-card c5" />
+          </div>
+          <div className="load-title serif">카드를 섞는 중…</div>
+          <div className="load-sub">질문을 뽑아내고 있습니다</div>
+        </div>
+      )}
+
       <header className="hero">
         <div className="eyebrow">ARCANA · INTERVIEW</div>
         <h1
@@ -250,9 +264,9 @@ export default function UploadPage() {
           면접이 시작됩니다
         </h1>
         <p className="lede">
-          자소서나 채용공고, 하나만 있어도 질문 열 장을 뽑아냅니다. 둘 다 펼쳐
-          두면 더 날카로운 질문이 나옵니다. 카드를 뒤집고, 목소리로 답하고,
-          평가를 받으세요.
+          자소서나 채용공고, 하나만 있어도 질문 열 장을 뽑아냅니다.
+          <br />둘 다 펼쳐 두면 더 날카로운 질문이 나옵니다. <br />
+          카드를 뒤집고, 목소리로 답하고, 평가를 받으세요.
         </p>
       </header>
 
@@ -277,7 +291,7 @@ export default function UploadPage() {
         {loading ? (
           <span className="loading-text">카드를 펼치는 중…</span>
         ) : (
-          "질문 생성하기"
+          "질문 만들기"
         )}
       </button>
 
@@ -406,6 +420,120 @@ export default function UploadPage() {
         .demo-btn:hover {
           opacity: 1;
           border-color: var(--gold);
+        }
+
+        /* ── 로딩 오버레이 ── */
+        .loading-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 50;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 34px;
+          background:
+            radial-gradient(
+              circle at 50% 42%,
+              rgba(60, 29, 110, 0.55),
+              rgba(11, 4, 28, 0.92) 70%
+            );
+          backdrop-filter: blur(6px);
+          animation: overlay-in 0.4s ease both;
+        }
+        @keyframes overlay-in {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        .deck {
+          position: relative;
+          width: 120px;
+          height: 180px;
+          perspective: 900px;
+        }
+        .tarot-card {
+          position: absolute;
+          inset: 0;
+          border-radius: 12px;
+          border: 1px solid var(--line);
+          background:
+            radial-gradient(
+              circle at 50% 30%,
+              rgba(243, 182, 224, 0.28),
+              transparent 60%
+            ),
+            linear-gradient(160deg, var(--velvet-2), var(--ink));
+          box-shadow:
+            0 12px 34px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(238, 160, 214, 0.14) inset;
+          transform-style: preserve-3d;
+          transform-origin: center;
+          animation: shuffle 2.4s ease-in-out infinite;
+        }
+        .tarot-card::after {
+          content: "✦";
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 34px;
+          color: var(--gold-bright);
+          opacity: 0.85;
+        }
+        .c1 {
+          animation-delay: 0s;
+        }
+        .c2 {
+          animation-delay: 0.32s;
+        }
+        .c3 {
+          animation-delay: 0.64s;
+        }
+        .c4 {
+          animation-delay: 0.96s;
+        }
+        .c5 {
+          animation-delay: 1.28s;
+        }
+        @keyframes shuffle {
+          0% {
+            transform: translate(0, 0) rotate(0deg) rotateY(0deg);
+            z-index: 1;
+          }
+          25% {
+            transform: translate(-58px, -26px) rotate(-11deg) rotateY(180deg);
+            z-index: 5;
+          }
+          50% {
+            transform: translate(0, -8px) rotate(0deg) rotateY(360deg);
+            z-index: 3;
+          }
+          75% {
+            transform: translate(58px, -26px) rotate(11deg) rotateY(180deg);
+            z-index: 5;
+          }
+          100% {
+            transform: translate(0, 0) rotate(0deg) rotateY(0deg);
+            z-index: 1;
+          }
+        }
+        .load-title {
+          font-size: 26px;
+          letter-spacing: 0.04em;
+          color: var(--parchment);
+          animation: pulse 1.8s ease-in-out infinite;
+        }
+        .load-sub {
+          margin-top: -22px;
+          font-size: 13.5px;
+          letter-spacing: 0.06em;
+          color: var(--mist);
+          opacity: 0.8;
         }
       `}</style>
     </main>
