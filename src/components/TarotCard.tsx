@@ -45,9 +45,6 @@ export function TarotCard({
                 <div className="name-en">{arc.name}</div>
               </>
           }
-          {answered && score != null && (
-            <div className="score-badge">{score}</div>
-          )}
         </div>
       </div>
 
@@ -166,22 +163,6 @@ export function TarotCard({
           border-radius: 99px;
           font-weight: 700;
           white-space: nowrap;
-        }
-
-        .score-badge {
-          position: absolute;
-          bottom: 9px;
-          right: 9px;
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: var(--gold);
-          color: var(--void);
-          font-weight: 700;
-          font-size: 13px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
       `}</style>
     </button>
