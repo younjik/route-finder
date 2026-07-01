@@ -35,7 +35,11 @@ export async function POST(req: NextRequest) {
         "당신은 한국 기업의 채용 면접관입니다. 아래의 [자소서]와 [채용공고]를 분석해 " +
         "핵심 키워드를 추출하고, 실제 면접에서 나올 법한 한국어 예상 면접 질문 10개를 만드세요.\n\n" +
         "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 동기 등). " +
-        "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.",
+        "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n" +
+        "각 질문마다 지원자가 답변을 준비할 때 참고할 '힌트'도 함께 만드세요. 힌트는 다음을 포함합니다:\n" +
+        "- keywords: 답변에 포함하면 좋은 핵심 키워드 3~5개 (자소서·공고 내용을 반영)\n" +
+        "- star: 그 질문에 맞춰 구체화한 STAR 기법 가이드(situation/task/action/result 각 1~2문장, 무엇을 말하면 좋을지 안내하는 문장으로 작성)\n" +
+        "- sampleAnswer: 실제 합격자 답변처럼 자연스러운 답변 예시 2~4문장 요약",
     });
 
     content.push({ type: "text", text: "\n[자소서]\n" });
@@ -75,16 +79,26 @@ export async function POST(req: NextRequest) {
       "id": 0,                    // 카드 index와 동일 (0~9)
       "category": "직무역량",      // 질문 영역
       "difficulty": "normal",     // "normal" 또는 "advanced" (전체 10개 중 5개가 advanced)
-      "question": "..."           // 한국어 면접 질문 (구체적으로)
+      "question": "...",          // 한국어 면접 질문 (구체적으로)
+      "hint": {
+        "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"],
+        "star": {
+          "situation": "어떤 상황·배경을 짚어야 하는지 안내",
+          "task": "본인이 맡았던 과제·목표를 어떻게 짚어야 하는지 안내",
+          "action": "구체적으로 어떤 행동·과정을 강조해야 하는지 안내",
+          "result": "어떤 결과·수치·배운 점을 강조해야 하는지 안내"
+        },
+        "sampleAnswer": "실제 답변처럼 자연스럽게 작성한 예시 답변 2~4문장"
+      }
     }
-    // ... 총 10개, id 0부터 9까지
+    // ... 총 10개, id 0부터 9까지, 각 질문마다 hint 포함
   ]
 }`,
     });
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 3000,
+      max_tokens: 6000,
       messages: [{ role: "user", content }],
     });
 
@@ -108,6 +122,7 @@ export async function POST(req: NextRequest) {
       keywords: parsed.keywords ?? [],
       questions: (parsed.questions ?? []).slice(0, 10).map((q: any, i: number) => {
         const arc = ARCANA[q.id ?? i] ?? ARCANA[i];
+        const h = q.hint ?? {};
         return {
           id: q.id ?? i,
           arcana: arc.name,
@@ -115,6 +130,16 @@ export async function POST(req: NextRequest) {
           category: q.category ?? "면접",
           difficulty: q.difficulty === "advanced" ? "advanced" : "normal",
           question: q.question ?? "",
+          hint: {
+            keywords: Array.isArray(h.keywords) ? h.keywords : [],
+            star: {
+              situation: h.star?.situation ?? "",
+              task: h.star?.task ?? "",
+              action: h.star?.action ?? "",
+              result: h.star?.result ?? "",
+            },
+            sampleAnswer: h.sampleAnswer ?? "",
+          },
         };
       }),
     };
