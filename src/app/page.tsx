@@ -17,7 +17,9 @@ function MultiFileSlot({
   const [drag, setDrag] = useState(false);
 
   return (
-    <div className={`slot ${files.length > 0 ? "filled" : ""} ${drag ? "drag" : ""}`}>
+    <div
+      className={`slot ${files.length > 0 ? "filled" : ""} ${drag ? "drag" : ""}`}
+    >
       <div
         className="slot-drop"
         onClick={() => inputRef.current?.click()}
@@ -29,7 +31,8 @@ function MultiFileSlot({
         onDrop={(e) => {
           e.preventDefault();
           setDrag(false);
-          if (e.dataTransfer.files?.length) onAdd(Array.from(e.dataTransfer.files));
+          if (e.dataTransfer.files?.length)
+            onAdd(Array.from(e.dataTransfer.files));
         }}
         role="button"
         tabIndex={0}
@@ -50,7 +53,9 @@ function MultiFileSlot({
         />
         <div className="slot-glyph">+</div>
         <div className="slot-label">자소서 · 채용공고</div>
-        <div className="slot-sub">클릭 또는 드래그하여 업로드 (여러 파일 가능)</div>
+        <div className="slot-sub">
+          클릭 또는 드래그하여 업로드 (여러 파일 가능)
+        </div>
       </div>
 
       {files.length > 0 && (
@@ -164,7 +169,9 @@ function MultiFileSlot({
           color: var(--mist);
           font-size: 10px;
           cursor: pointer;
-          transition: border-color 0.2s, color 0.2s;
+          transition:
+            border-color 0.2s,
+            color 0.2s;
         }
         .file-remove:hover {
           border-color: var(--ember);
@@ -402,7 +409,14 @@ const DEMO_DATA = {
   ],
 } as const;
 
-const KEYWORD_OPTIONS = ["직무역량", "경험", "인성", "조직적합성", "문제해결", "지원동기"];
+const KEYWORD_OPTIONS = [
+  "직무역량",
+  "경험",
+  "인성",
+  "조직적합성",
+  "문제해결",
+  "지원동기",
+];
 
 export default function UploadPage() {
   const router = useRouter();
@@ -412,7 +426,23 @@ export default function UploadPage() {
   const [customInput, setCustomInput] = useState("");
   const [customKeywords, setCustomKeywords] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadPhase, setLoadPhase] = useState(0);
   const [error, setError] = useState<string | null>(null);
+
+  const LOADING_TEXTS = [
+    "준비를 시작합니다…\n잠깐 마음을 가다듬어 보세요",
+    "STAR 기법으로 답하세요\n상황·과제·행동·결과 순으로",
+    "숫자로 말하세요\n'많이 개선됐다'보다 '30% 향상됐다'가 강렬합니다",
+    "첫 문장이 가장 중요합니다\n결론부터 먼저 말하세요",
+    "약점 질문도 기회입니다\n성장 과정을 함께 보여주세요",
+    "지원 동기는 구체적일수록 좋습니다\n팀·제품·문화를 언급하세요",
+    "침묵을 두려워하지 마세요\n생각할 시간을 요청해도 됩니다",
+    "면접관의 의도를 파악하세요\n경험인지 가치관인지 역량인지",
+    "천천히, 명확하게\n자신감은 목소리에서 나옵니다",
+    '역질문도 준비하세요\n"이 팀에서 어떤 역할이 가장 필요한가요?"',
+    "준비 완료!\n당신만의 카드가 기다립니다 ✦",
+  ];
   const [showModeModal, setShowModeModal] = useState(false);
 
   const effectiveKeywords = [...selectedKeywords, ...customKeywords];
@@ -481,7 +511,28 @@ export default function UploadPage() {
   async function handleGenerate() {
     if (files.length === 0 && effectiveKeywords.length === 0) return;
     setError(null);
+    setLoadProgress(0);
     setLoading(true);
+
+    // 60fps로 부드럽게 채움: phase 0 = 2초, phase 1~8 = 6초씩
+    let phase = 0;
+    let phaseStart = Date.now();
+    setLoadPhase(0);
+
+    const progInterval = setInterval(() => {
+      const elapsed = Date.now() - phaseStart;
+      const duration = phase === 0 ? 2000 : 6000;
+      const t = Math.min(elapsed / duration, 1);
+      const current = phase * 10 + 10 * t;
+      setLoadProgress(Math.min(parseFloat(current.toFixed(1)), 90));
+
+      if (t >= 1 && phase < 8) {
+        phase++;
+        phaseStart = Date.now();
+        setLoadPhase(phase);
+      }
+    }, 16);
+
     try {
       const fd = new FormData();
       files.forEach((f) => fd.append("files", f));
@@ -491,13 +542,19 @@ export default function UploadPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "질문 생성 실패");
 
+      clearInterval(progInterval);
+      setLoadProgress(100);
+      setLoadPhase(10);
+
       const result = data as GenerateResult;
       sessionStorage.setItem("interview:generate", JSON.stringify(result));
       sessionStorage.removeItem("interview:answers");
-      router.push("/cards");
+      setTimeout(() => router.push("/cards"), 400);
     } catch (e: any) {
+      clearInterval(progInterval);
       setError(e.message);
       setLoading(false);
+      setLoadProgress(0);
     }
   }
 
@@ -512,8 +569,22 @@ export default function UploadPage() {
             <div className="tarot-card c4" />
             <div className="tarot-card c5" />
           </div>
-          <div className="load-title serif">카드를 섞는 중…</div>
-          <div className="load-sub">질문을 뽑아내고 있습니다</div>
+          <div className="load-tip" key={loadPhase}>
+            {LOADING_TEXTS[loadPhase].split("\n").map((line, i) => (
+              <span key={i} className={i === 0 ? "load-tip-main" : "load-tip-sub"}>
+                {line}
+              </span>
+            ))}
+          </div>
+          <div className="load-progress-wrap">
+            <div className="load-progress-bar">
+              <div
+                className="load-progress-fill"
+                style={{ width: `${loadProgress}%` }}
+              />
+            </div>
+            <div className="load-percent">{Math.round(loadProgress)}%</div>
+          </div>
         </div>
       )}
 
@@ -974,18 +1045,61 @@ export default function UploadPage() {
             z-index: 1;
           }
         }
-        .load-title {
-          font-size: 26px;
-          letter-spacing: 0.04em;
-          color: var(--parchment);
-          animation: pulse 1.8s ease-in-out infinite;
+        .load-tip {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          text-align: center;
+          max-width: 360px;
+          animation: tip-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
         }
-        .load-sub {
-          margin-top: -22px;
-          font-size: 13.5px;
-          letter-spacing: 0.06em;
+        .load-tip-main {
+          font-size: 15px;
+          letter-spacing: 0.02em;
+          color: var(--parchment);
+          line-height: 1.5;
+        }
+        .load-tip-sub {
+          font-size: 13px;
+          color: var(--gold-bright);
+          opacity: 0.85;
+          letter-spacing: 0.03em;
+          line-height: 1.5;
+        }
+        @keyframes tip-in {
+          from {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .load-progress-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          width: 280px;
+        }
+        .load-progress-bar {
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 99px;
+          overflow: hidden;
+        }
+        .load-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--gold), var(--gold-bright));
+          border-radius: 99px;
+        }
+        .load-percent {
+          font-size: 12px;
           color: var(--mist);
-          opacity: 0.8;
+          letter-spacing: 0.08em;
         }
 
         /* ── 난이도 선택 모달 ── */
