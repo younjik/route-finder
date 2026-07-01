@@ -64,12 +64,27 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json();
+
+    // Clova는 실패해도 HTTP 200을 주고 body의 result 필드로만 알려주는 경우가 있다
+    // (예: 일별 사용 한도 초과).
+    if (data.result && data.result !== "SUCCESS" && data.result !== "COMPLETED") {
+      console.error("[clova]", JSON.stringify(data));
+      return NextResponse.json(
+        { error: data.message ? `클로바 STT 오류: ${data.message}` : "클로바 STT 처리에 실패했습니다." },
+        { status: 502 },
+      );
+    }
+
     const text: string =
       data.text ||
       (Array.isArray(data.segments)
         ? data.segments.map((s: any) => s.text).join(" ")
         : "") ||
       "";
+
+    if (!text.trim()) {
+      console.error("[clova] 빈 인식 결과, 원본 응답:", JSON.stringify(data));
+    }
 
     return NextResponse.json({ text });
   } catch (err: any) {

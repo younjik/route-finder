@@ -160,11 +160,16 @@ export function AnswerDrawer({
     setPhase("transcribing");
     try {
       const fd = new FormData();
-      fd.append("audio", blob, "answer.webm");
+      fd.append("audio", blob, "answer.wav");
       const sttRes = await fetch("/api/stt", { method: "POST", body: fd });
       const sttData = await sttRes.json();
       if (!sttRes.ok) throw new Error(sttData.error ?? "음성 인식 실패");
       const text: string = sttData.text ?? "";
+      if (!text.trim()) {
+        throw new Error(
+          "답변 음성이 인식되지 않았습니다. 마이크에 더 가까이서, 조금 더 크고 또렷하게 다시 답변해 주세요.",
+        );
+      }
       setTranscript(text);
 
       setPhase("evaluating");
@@ -221,7 +226,12 @@ export function AnswerDrawer({
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="split-wrap" onClick={(e) => e.stopPropagation()}>
-        <button className="close" onClick={onClose} aria-label="닫기">✕</button>
+        <button className="close" onClick={onClose} aria-label="닫기">
+          <svg className="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="5" y1="5" x2="19" y2="19" />
+            <line x1="19" y1="5" x2="5" y2="19" />
+          </svg>
+        </button>
 
         {/* ── 1열: 뽑힌 카드 ── */}
         <div className="card-col">
@@ -260,9 +270,28 @@ export function AnswerDrawer({
         {/* ── 2·3열: 질문 · 타이머 · 힌트 ── */}
         <div className={`content-col${question.difficulty === "advanced" ? " advanced" : ""}`}>
           <div className="content-scroll">
-            <h2 className="q-text serif">
-              {highlightKeywords(question.question, question.keywords ?? [])}
-            </h2>
+            <div className="q-wrap">
+              <h2 className={`q-text serif${questionHidden ? " q-hidden" : ""}`}>
+                {highlightKeywords(question.question, question.keywords ?? [])}
+              </h2>
+              <button
+                type="button"
+                className="q-toggle"
+                onClick={() => setQuestionHidden((v) => !v)}
+              >
+                {questionHidden ? (
+                  <>
+                    <svg className="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.6 20.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 8 11 8a20.7 20.7 0 0 1-3.22 4.36M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    질문 보기
+                  </>
+                ) : (
+                  "질문 가리기"
+                )}
+              </button>
+            </div>
 
             {(error || recError) && (
               <div className="err">⚠ {error || recError}</div>
@@ -271,63 +300,41 @@ export function AnswerDrawer({
             {phase === "intro" && (
               <div className="stage">
                 <p className="stage-desc">
-                  준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.<br />
+                  준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.
+                  <br />
                   최대 <b>2분</b>까지 답변을 녹음할 수 있어요.
                 </p>
-                <button className="primary" onClick={beginPrep}>◷ 준비 시작</button>
+                <button className="primary" onClick={beginPrep}>
+                  ◷ 준비 시작
+                </button>
               </div>
             )}
 
-            {/* 헤더 아래 남은 공간에서 세로 가운데 정렬 */}
-            <div className="card-body">
-              <div className="q-wrap">
-                <h2 className={`q-text serif${questionHidden ? " q-hidden" : ""}`}>
-                  {highlightKeywords(question.question, question.keywords ?? [])}
-                </h2>
-                <button
-                  className="q-toggle"
-                  onClick={() => setQuestionHidden((v) => !v)}
-                >
-                  {questionHidden ? "👁 질문 보기" : "🙈 질문 가리기"}
+            {phase === "prep" && (
+              <div className="stage">
+                <div className="ring prep">
+                  <div className="ring-num serif">{fmt(timer)}</div>
+                  <div className="ring-label">생각을 정리하세요</div>
+                </div>
+                <button className="ghost" onClick={skipPrep}>
+                  바로 답변 시작 →
                 </button>
               </div>
+            )}
 
-              {(error || recError) && (
-                <div className="err">⚠ {error || recError}</div>
-              )}
-
-              {phase === "intro" && (
-                <div className="stage">
-                  <p className="stage-desc">
-                    준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.
-                    <br />
-                    최대 <b>2분</b>까지 답변을 녹음할 수 있어요.
-                  </p>
-                  <button className="primary" onClick={beginPrep}>
-                    ◷ 준비 시작
-                  </button>
+            {phase === "recording" && (
+              <div className="stage">
+                <div className="ring rec">
+                  <span className="rec-dot" />
+                  <div className="ring-num serif">{fmt(timer)}</div>
+                  <div className="ring-label">답변 녹음 중 · 최대 2:00</div>
                 </div>
-              )}
-
-              {phase === "prep" && (
-                <div className="stage">
-                  <div className="ring prep">
-                    <div className="ring-num serif">{fmt(timer)}</div>
-                    <div className="ring-label">생각을 정리하세요</div>
-                  </div>
-                  <button className="ghost" onClick={skipPrep}>
-                    바로 답변 시작 →
-                  </button>
-                </div>
-              )}
-
-              {phase === "recording" && (
-                <div className="stage">
-                  <button className="primary stop" onClick={finishRecording}>
-                    ■ 답변 마치기 &amp; 평가 받기
-                  </button>
-                </div>
-              )}
+                <p className="warn-note">⚠ 답변 중 창을 닫으면 기록되지 않습니다.</p>
+                <button className="primary stop" onClick={finishRecording}>
+                  ■ 답변 마치기 &amp; 평가 받기
+                </button>
+              </div>
+            )}
 
               {process.env.NODE_ENV !== "production" &&
                 (phase === "intro" || phase === "prep" || phase === "recording") && (
@@ -342,7 +349,7 @@ export function AnswerDrawer({
                 <p className="stage-desc pulse">
                   {phase === "transcribing"
                     ? "음성을 텍스트로 옮기는 중…"
-                    : "Claude가 답변을 평가하는 중…"}
+                    : "당신의 가능성을 비추는 중 ..."}
                 </p>
               </div>
             )}
@@ -370,25 +377,21 @@ export function AnswerDrawer({
                     <h4>개선할 점</h4>
                     <ul>{evaluation.improvements.map((s, i) => <li key={i}>{s}</li>)}</ul>
                   </div>
-                  <div className="summary">
-                    <span className="serif quote">"</span>
-                    {evaluation.summary}
-                  </div>
-                  {evaluation.suggestedAnswer && (
-                    <details className="suggested">
-                      <summary>✦ 추천 답변 예시 보기</summary>
-                      <p className="suggested-note">
-                        내가 말한 내용을 바탕으로 재구성한 예시입니다. 새로운 사실은 추가되지 않았습니다.
-                      </p>
-                      <p className="suggested-text">{evaluation.suggestedAnswer}</p>
-                    </details>
-                  )}
-                  <button className="ghost" onClick={onClose}>다음 카드 고르기 →</button>
                 </div>
                 <div className="summary">
-                  <span className="serif quote">"</span>
+                  <span className="serif quote open">"</span>
                   {evaluation.summary}
+                  <span className="serif quote close">"</span>
                 </div>
+                {evaluation.suggestedAnswer && (
+                  <details className="suggested">
+                    <summary>✦ 추천 답변 예시 보기</summary>
+                    <p className="suggested-note">
+                      내가 말한 내용을 바탕으로 재구성한 예시입니다. 새로운 사실은 추가되지 않았습니다.
+                    </p>
+                    <p className="suggested-text">{evaluation.suggestedAnswer}</p>
+                  </details>
+                )}
                 <button className="ghost" onClick={onClose}>다음 카드 고르기 →</button>
               </div>
             )}
@@ -436,7 +439,6 @@ export function AnswerDrawer({
                 )}
               </div>
             )}
-            </div>
           </div>
         </div>
       </div>
@@ -459,6 +461,8 @@ export function AnswerDrawer({
 
         /* ── 3분할 레이아웃 ── */
         .split-wrap {
+          /* 카드와 오른쪽 패널의 높이를 항상 동일하게 유지하는 기준값 (내용 길이와 무관) */
+          --card-h: min(600px, 141vw, calc(100dvh - 64px));
           position: relative;
           display: flex;
           align-items: stretch;
@@ -492,6 +496,7 @@ export function AnswerDrawer({
           cursor: pointer;
         }
         .close:hover { border-color: var(--gold); color: var(--gold-bright); }
+        .close-icon { width: 15px; height: 15px; }
 
         /* ── 1열: 뽑힌 카드 ── */
         .card-col {
@@ -499,11 +504,11 @@ export function AnswerDrawer({
              고정 30%/300px로 두면 카드가 더 클 때 옆 칼럼과 겹침 */
           flex: 0 0 auto;
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           justify-content: center;
         }
         @media (max-width: 760px) {
-          .card-col { flex: none; width: 100%; max-width: 240px; }
+          .card-col { flex: none; width: 100%; max-width: 240px; align-items: flex-start; }
         }
 
         /* ── 2·3열: 질문 · 타이머 · 힌트 ── */
@@ -515,11 +520,11 @@ export function AnswerDrawer({
           border: 1px solid var(--line);
           border-radius: 18px;
           box-shadow: 0 28px 70px rgba(0,0,0,0.65);
-          max-height: calc(100dvh - 48px);
+          height: var(--card-h);
           overflow: hidden;
         }
         @media (max-width: 760px) {
-          .content-col { max-height: none; width: 100%; }
+          .content-col { height: auto; max-height: none; width: 100%; }
         }
         .content-scroll {
           flex: 1;
@@ -528,7 +533,10 @@ export function AnswerDrawer({
           padding: 30px 32px 34px;
           display: flex;
           flex-direction: column;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
         }
+        .content-scroll::-webkit-scrollbar { display: none; }
         .content-col.advanced .q-text { color: #f5e6c0; opacity: 1; }
         .content-col.advanced .stage-desc { color: rgba(245,230,192,0.7); }
         .content-col.advanced .stage-desc b { color: var(--gold-bright); }
@@ -536,15 +544,18 @@ export function AnswerDrawer({
         /* ── 3D flip wrapper ── */
         .card-wrap {
           perspective: 1400px;
-          /* 바닥에 깔린 카드와 동일한 2:3 비율 기준 너비 (height = width * 1.5) */
-          width: min(400px, 94vw, calc((100dvh - 64px) / 1.5));
+          /* 오른쪽 패널과 동일한 --card-h를 기준으로 한 2:3 비율 너비 (height = width * 1.5) */
+          width: min(calc(var(--card-h) / 1.5), 94vw);
           flex-shrink: 0;
+        }
+        @media (max-width: 760px) {
+          .card-wrap { width: 100%; }
         }
 
         .card-inner {
           position: relative;
           aspect-ratio: 2 / 3;
-          max-height: calc(100dvh - 64px);
+          max-height: var(--card-h);
           transform-style: preserve-3d;
           transition: transform 0.78s cubic-bezier(0.4, 0.1, 0.2, 1);
           border-radius: 18px;
@@ -682,17 +693,6 @@ export function AnswerDrawer({
           color: var(--gold-bright);
         }
 
-        .close {
-          position: absolute;
-          top: 16px;
-          right: 18px;
-          background: transparent;
-          border: none;
-          color: var(--mist);
-          font-size: 18px;
-          cursor: pointer;
-        }
-
         /* 타로 카드 헤더 */
         .card-header {
           display: flex;
@@ -736,16 +736,45 @@ export function AnswerDrawer({
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           margin-bottom: 20px;
         }
         .q-text {
           font-size: clamp(18px, 2.4vw, 23px);
           line-height: 1.6;
-          margin-bottom: 22px;
+          margin-bottom: 0;
           color: var(--parchment);
           text-align: left;
           opacity: 0.95;
+          word-break: keep-all;
+          overflow-wrap: break-word;
+          transition: filter 0.2s;
+        }
+        .q-text.q-hidden {
+          filter: blur(9px);
+          user-select: none;
+        }
+        .q-toggle {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: transparent;
+          border: 1px solid var(--line);
+          color: var(--mist);
+          padding: 6px 13px;
+          border-radius: 8px;
+          font-size: 12.5px;
+          cursor: pointer;
+          transition: border-color 0.2s, color 0.2s;
+        }
+        .q-toggle:hover {
+          border-color: var(--gold);
+          color: var(--gold-bright);
+        }
+        .eye-icon {
+          width: 14px;
+          height: 14px;
+          flex-shrink: 0;
         }
         .q-text :global(.kw-mark) {
           background: none;
@@ -779,6 +808,13 @@ export function AnswerDrawer({
         }
         .stage-desc b {
           color: var(--gold-bright);
+        }
+        .warn-note {
+          font-size: 12.5px;
+          color: var(--ember);
+          opacity: 0.85;
+          text-align: center;
+          margin-top: -8px;
         }
         .pulse {
           animation: p 1.4s ease-in-out infinite;
@@ -955,6 +991,27 @@ export function AnswerDrawer({
           line-height: 1.7;
           color: var(--parchment);
         }
+        .suggested {
+          border: 1px solid rgba(201, 162, 75, 0.35);
+          border-radius: 10px;
+          padding: 10px 14px;
+        }
+        .suggested summary {
+          cursor: pointer;
+          font-size: 13px;
+          color: var(--gold-bright);
+        }
+        .suggested-note {
+          margin-top: 10px;
+          font-size: 12px;
+          color: var(--mist);
+        }
+        .suggested-text {
+          margin-top: 8px;
+          font-size: 14px;
+          line-height: 1.7;
+          color: var(--parchment);
+        }
         .feedback {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -1004,7 +1061,9 @@ export function AnswerDrawer({
           font-size: 14.5px; line-height: 1.7; color: var(--mist);
           border-left: 2px solid var(--gold); padding-left: 16px;
         }
-        .summary .quote { color: var(--gold); font-size: 28px; margin-right: 4px; line-height: 0; }
+        .summary .quote { color: var(--gold); font-size: 28px; }
+        .summary .quote.open { margin-right: 4px; line-height: 0; }
+        .summary .quote.close { margin-left: 4px; line-height: 0.6; vertical-align: -6px; }
 
         /* ── 면접 힌트 ── */
         .hint-panel {
@@ -1013,12 +1072,17 @@ export function AnswerDrawer({
           border-top: 1px solid var(--line-soft);
         }
         .hint-toggle {
+          box-sizing: border-box;
+          width: 190px;
+          height: 40px;
+          line-height: 1;
           background: transparent;
           border: 1px solid var(--line);
           color: var(--gold-bright);
-          padding: 9px 16px;
+          padding: 0 16px;
           border-radius: 9px;
           font-size: 13.5px;
+          text-align: center;
           cursor: pointer;
           transition: border-color 0.2s;
         }
