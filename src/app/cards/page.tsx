@@ -308,6 +308,7 @@ export default function CardsPage() {
         </div>
       </header>
 
+      <div className="body-center">
       <div className="intro-band">
         <div className="eyebrow">THE SPREAD</div>
         <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
@@ -360,6 +361,7 @@ export default function CardsPage() {
         })}
         </div>
       </section>
+      </div>
 
       {/* 답변 드로어 */}
       {activeQuestion && (
@@ -558,6 +560,13 @@ export default function CardsPage() {
           text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
         }
 
+        .body-center {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
         .intro-band {
           flex-shrink: 0;
           text-align: center;
@@ -696,8 +705,7 @@ export default function CardsPage() {
           --card-w: min(clamp(125px, 29dvh, 255px), 40vw);
           --R: clamp(270px, 50dvh, 520px);
           --d: clamp(170px, 38dvh, 310px);
-          flex: 1;
-          min-height: 0;
+          flex: 0 0 auto;
           position: relative;
           width: 100vw;
           margin-left: calc(50% - 50vw);
