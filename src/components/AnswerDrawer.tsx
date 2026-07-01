@@ -40,7 +40,7 @@ export function AnswerDrawer({
   onClose: () => void;
   onSaved: (card: AnsweredCard) => void;
 }) {
-  const { error: recError, start, stop } = useRecorder();
+  const { error: recError, start, stop, abort } = useRecorder();
   const [phase, setPhase] = useState<Phase>(existing ? "done" : "intro");
   const [flipped, setFlipped] = useState(false);
   const [sparkle, setSparkle] = useState(false);
@@ -82,7 +82,7 @@ export function AnswerDrawer({
     intervalRef.current = null;
   }
 
-  useEffect(() => () => clearTimer(), []);
+  useEffect(() => () => { clearTimer(); abort(); }, []);
 
   function beginPrep() {
     setPhase("prep");

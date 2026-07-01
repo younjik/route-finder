@@ -313,6 +313,15 @@ export default function CardsPage() {
                           {a.evaluation.improvements[0] && (
                             <p className="cap-tip">▸ {a.evaluation.improvements[0]}</p>
                           )}
+                          {a.evaluation.suggestedAnswer && (
+                            <div className="cap-suggested">
+                              <div className="cap-suggested-label">✦ 추천 답변 예시</div>
+                              <p className="cap-suggested-note">
+                                내가 말한 내용만을 바탕으로 재구성한 예시입니다.
+                              </p>
+                              <p className="cap-suggested-text">{a.evaluation.suggestedAnswer}</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -785,6 +794,33 @@ export default function CardsPage() {
           font-size: 12.5px;
           line-height: 1.5;
           color: var(--ember);
+        }
+        .cap-suggested {
+          border: 1px solid rgba(201, 162, 75, 0.3);
+          border-radius: 10px;
+          padding: 12px 14px;
+          background: rgba(201, 162, 75, 0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .cap-suggested-label {
+          font-size: 12px;
+          color: var(--gold-bright);
+          font-weight: 600;
+          letter-spacing: 0.06em;
+        }
+        .cap-suggested-note {
+          font-size: 11.5px;
+          color: var(--mist);
+          opacity: 0.7;
+          line-height: 1.4;
+        }
+        .cap-suggested-text {
+          font-size: 13px;
+          line-height: 1.75;
+          color: var(--parchment);
+          white-space: pre-wrap;
         }
         .cap-foot {
           text-align: center;
