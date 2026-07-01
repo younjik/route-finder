@@ -285,11 +285,6 @@ export default function CardsPage() {
         <button className="back-btn" onClick={() => router.push("/")}>
           ← 처음으로
         </button>
-        <div className="progress">
-          <span className="count">{answeredCount}</span>
-          <span className="slash">/ 10</span>
-          <span className="lbl">답변 완료</span>
-        </div>
         <div className="top-right">
           <button
             className="reset-btn"
@@ -310,7 +305,12 @@ export default function CardsPage() {
 
       <div className="intro-band">
         <div className="eyebrow">THE SPREAD</div>
-        <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
+        <h1
+          className="serif"
+          style={{ fontFamily: '"Renaissance Secret", serif' }}
+        >
+          당신을 위한 질문이 모두 준비되었습니다.
+        </h1>
         <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
         {data.keywords.length > 0 && (
           <div className="keywords">
@@ -481,7 +481,7 @@ export default function CardsPage() {
         .top {
           flex-shrink: 0;
           display: grid;
-          grid-template-columns: 1fr auto 1fr;
+          grid-template-columns: 1fr 1fr;
           align-items: center;
           margin-bottom: 10px;
         }
@@ -536,28 +536,6 @@ export default function CardsPage() {
           opacity: 0.3;
           cursor: not-allowed;
         }
-        .progress {
-          display: flex;
-          align-items: baseline;
-          gap: 6px;
-        }
-        .progress .count {
-          font-family: var(--font-display);
-          font-size: 26px;
-          color: var(--gold-bright);
-          text-shadow: 0 0 16px rgba(243, 182, 224, 0.7);
-        }
-        .progress .slash {
-          color: var(--mist);
-          font-size: 15px;
-        }
-        .progress .lbl {
-          font-size: 12px;
-          color: var(--parchment);
-          margin-left: 4px;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-        }
-
         .intro-band {
           flex-shrink: 0;
           text-align: center;
@@ -567,13 +545,14 @@ export default function CardsPage() {
           font-size: 11px;
           letter-spacing: 0.4em;
           color: var(--gold-bright);
-          margin-bottom: 5px;
+          margin-bottom: 14px;
           text-shadow: 0 0 20px rgba(243, 182, 224, 0.8);
         }
         .intro-band h1 {
           font-size: clamp(18px, 3.5vw, 28px);
           font-weight: 600;
-          margin-bottom: 5px;
+          line-height: 1.5;
+          margin-bottom: 14px;
           text-shadow:
             0 0 60px rgba(243, 182, 224, 0.35),
             0 2px 4px rgba(0, 0, 0, 0.95),
@@ -590,7 +569,7 @@ export default function CardsPage() {
           flex-wrap: wrap;
           gap: 6px;
           justify-content: center;
-          margin-top: 8px;
+          margin-top: 16px;
         }
         .kw {
           font-size: 12px;
