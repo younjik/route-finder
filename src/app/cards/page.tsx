@@ -7,6 +7,16 @@ import { TarotCard } from "@/components/TarotCard";
 import { AnswerDrawer } from "@/components/AnswerDrawer";
 import type { GenerateResult, AnsweredCard } from "@/lib/types";
 
+// 부채꼴 아치의 반지름 — CSS의 --R 값과 반드시 일치해야 함
+const ARC_RADIUS = 420;
+// 휠/드래그로 회전시킬 수 있는 최대 offset (deg)
+const ROTATION_LIMIT = 70;
+const WHEEL_SENSITIVITY = 0.06;
+
+function clamp(v: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, v));
+}
+
 export default function CardsPage() {
   const router = useRouter();
   const [data, setData] = useState<GenerateResult | null>(null);
@@ -19,15 +29,84 @@ export default function CardsPage() {
   const [isShuffling, setIsShuffling] = useState(false);
   const [isDealing, setIsDealing] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [rotation, setRotation] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
   const spreadRef = useRef<HTMLElement>(null);
+  const dragRef = useRef({ startX: 0, startRotation: 0, moved: false });
+  const suppressClickRef = useRef(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
-  // 스프레드 초기 스크롤: 아치 중앙이 뷰포트 중심에 오도록
+  function toggleAccordion(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // 이 페이지에 머무는 동안 문서 스크롤 자체를 잠금 — 아치 영역 밖에서
+  // 휠/드래그를 해도 배경(페이지)이 밀려 내려가지 않도록.
+  // 실제 스크롤은 html(문서 스크롤링 엘리먼트)에서 일어나므로 body와 함께 잠가야 함
   useEffect(() => {
-    if (!data) return;
+    const html = document.documentElement;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      document.body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
+
+  // 휠 스크롤 → 부채 전체 회전 (기본 페이지 스크롤은 막음)
+  useEffect(() => {
     const el = spreadRef.current;
-    if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      setRotation((r) => clamp(r - delta * WHEEL_SENSITIVITY, -ROTATION_LIMIT, ROTATION_LIMIT));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
   }, [data]);
+
+  // 드래그 → 부채 전체 회전
+  useEffect(() => {
+    if (!isDragging) return;
+    const onPointerMove = (e: PointerEvent) => {
+      const deltaX = e.clientX - dragRef.current.startX;
+      if (Math.abs(deltaX) > 4) dragRef.current.moved = true;
+      const deltaDeg = (deltaX / ARC_RADIUS) * (180 / Math.PI);
+      setRotation(clamp(dragRef.current.startRotation + deltaDeg, -ROTATION_LIMIT, ROTATION_LIMIT));
+    };
+    const onPointerUp = () => {
+      setIsDragging(false);
+      if (dragRef.current.moved) suppressClickRef.current = true;
+    };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+    };
+  }, [isDragging]);
+
+  function handleSpreadPointerDown(e: React.PointerEvent) {
+    dragRef.current = { startX: e.clientX, startRotation: rotation, moved: false };
+    setIsDragging(true);
+  }
+
+  function handleSpreadClickCapture(e: React.MouseEvent) {
+    if (suppressClickRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      suppressClickRef.current = false;
+    }
+  }
 
   // 세션에서 데이터 로드
   useEffect(() => {
@@ -245,10 +324,17 @@ export default function CardsPage() {
 
       <section className="spread" ref={spreadRef}>
         <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`} key={resetKey}>
+      <section
+        className={`spread${isDragging ? " is-dragging" : ""}`}
+        ref={spreadRef}
+        onPointerDown={handleSpreadPointerDown}
+        onClickCapture={handleSpreadClickCapture}
+      >
+        <div className="arch-content">
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
-          const angle = -65 + i * (130 / 9);
+          const angle = -65 + i * (130 / 9) + rotation;
           const zIdx = Math.round(10 - Math.abs(i - 4.5));
           const deckRot = ((i - 4.5) * 2).toFixed(1);
           const collectDelay = `${i * 50}ms`;
@@ -324,21 +410,54 @@ export default function CardsPage() {
               </div>
 
               <div className="cap-list">
-                {answeredList.map((a) => (
-                  <div className="cap-item" key={a.questionId}>
-                    <div className="cap-item-top">
-                      <span className="cap-arcana serif">{a.arcanaKo}</span>
-                      <span className="cap-score">{a.evaluation.score}/10</span>
+                {answeredList.map((a) => {
+                  const isOpen = expandedIds.has(a.questionId);
+                  const category = data.questions.find((q) => q.id === a.questionId)?.category ?? "";
+                  return (
+                    <div key={a.questionId} className={`cap-item${isOpen ? " open" : ""}`}>
+                      <button
+                        className="cap-header"
+                        onClick={() => toggleAccordion(a.questionId)}
+                        aria-expanded={isOpen}
+                      >
+                        <div className="cap-header-info">
+                          <span className="cap-arcana serif">{a.arcanaKo}</span>
+                          {category && <span className="cap-category">{category}</span>}
+                        </div>
+                        <span className={`cap-chevron${isOpen ? " up" : ""}`}>▾</span>
+                      </button>
+                      {isOpen && (
+                        <div className="cap-body">
+                          <div className="cap-score-row">
+                            <span className="cap-score serif">
+                              {a.evaluation.score}<em>/10</em>
+                            </span>
+                            <div className="cap-score-bar">
+                              <div
+                                className="cap-score-fill"
+                                style={{ width: `${a.evaluation.score * 10}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="cap-q">{a.question}</p>
+                          <p className="cap-summary">{a.evaluation.summary}</p>
+                          {a.evaluation.improvements[0] && (
+                            <p className="cap-tip">▸ {a.evaluation.improvements[0]}</p>
+                          )}
+                          {a.evaluation.suggestedAnswer && (
+                            <div className="cap-suggested">
+                              <div className="cap-suggested-label">✦ 추천 답변 예시</div>
+                              <p className="cap-suggested-note">
+                                내가 말한 내용만을 바탕으로 재구성한 예시입니다.
+                              </p>
+                              <p className="cap-suggested-text">{a.evaluation.suggestedAnswer}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <p className="cap-q">{a.question}</p>
-                    <p className="cap-summary">{a.evaluation.summary}</p>
-                    {a.evaluation.improvements[0] && (
-                      <p className="cap-tip">
-                        ▸ {a.evaluation.improvements[0]}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="cap-foot">타로 면접 · Arcana Interview</div>
@@ -572,7 +691,7 @@ export default function CardsPage() {
           }
         }
 
-        /* ── 원호형 스크롤 카드 배열 ── */
+        /* ── 원호형 회전 카드 배열 (휠/드래그로 부채 전체가 회전) ── */
         .spread {
           --card-w: min(clamp(110px, 27dvh, 240px), 38vw);
           --R: clamp(260px, 48dvh, 500px);
@@ -582,19 +701,24 @@ export default function CardsPage() {
           position: relative;
           width: 100vw;
           margin-left: calc(50% - 50vw);
-          height: auto;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scrollbar-width: none;
-          margin-bottom: 0;
+          /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백 */
+          height: calc(var(--R) - var(--d) + var(--card-w) * 1.5 + 30px);
+          /* overflow를 여기서 잘라내면 호버 확대(scale) 시 카드 윗부분이 함께 잘림.
+             극단 회전 시 카드가 화면 밖으로 나가는 것은 페이지 스크롤이 잠겨 있어
+             뷰포트 자체가 걸러주므로 여기서 별도로 자를 필요가 없음 */
+          margin-bottom: 30px;
+          cursor: grab;
+          touch-action: none;
+          user-select: none;
         }
-        .spread::-webkit-scrollbar { display: none; }
+        .spread.is-dragging {
+          cursor: grabbing;
+        }
 
         .arch-content {
           position: relative;
           height: 100%;
-          /* 좌우 끝 카드(±65°)가 잘리지 않을 최소 너비 */
-          width: max(100%, calc(var(--R) * 1.9 + var(--card-w) + 60px));
+          width: 100%;
         }
 
         /* ── 리셋 Phase 1: 바깥 카드부터 순서대로 덱으로 수렴 (ease-in: 가속하며 모임) ── */
@@ -645,6 +769,10 @@ export default function CardsPage() {
           transform: rotate(var(--angle));
           transform-origin: center bottom;
           transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+          pointer-events: auto;
+        }
+        .spread.is-dragging .card-slot {
+          transition: none;
         }
         .card-slot:hover {
           transform: rotate(var(--angle)) translateY(-28px) scale(1.07) !important;
@@ -758,37 +886,109 @@ export default function CardsPage() {
           background: var(--line);
         }
 
+        /* ── 아코디언 결과 목록 ── */
         .cap-list {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 8px;
         }
         .cap-item {
           border: 1px solid var(--line-soft);
           border-radius: 12px;
-          padding: 16px 18px;
+          overflow: hidden;
           background: rgba(255, 255, 255, 0.02);
+          transition: border-color 0.2s;
         }
-        .cap-item-top {
+        .cap-item.open {
+          border-color: rgba(238, 160, 214, 0.38);
+          background: rgba(238, 160, 214, 0.03);
+        }
+        .cap-header {
+          width: 100%;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 18px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s;
+        }
+        .cap-header:hover {
+          background: rgba(255, 255, 255, 0.025);
+        }
+        .cap-header-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex: 1;
+          min-width: 0;
         }
         .cap-arcana {
           color: var(--gold);
           font-size: 15px;
+          flex-shrink: 0;
+        }
+        .cap-category {
+          font-size: 11px;
+          color: #f8d0ef;
+          border: 1px solid rgba(238, 160, 214, 0.4);
+          padding: 3px 10px;
+          border-radius: 99px;
+          background: rgba(238, 160, 214, 0.07);
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+        .cap-chevron {
+          color: var(--mist);
+          font-size: 16px;
+          flex-shrink: 0;
+          line-height: 1;
+          transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .cap-chevron.up {
+          transform: rotate(180deg);
+        }
+        .cap-body {
+          border-top: 1px solid var(--line-soft);
+          padding: 14px 18px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .cap-score-row {
+          display: flex;
+          align-items: center;
+          gap: 14px;
         }
         .cap-score {
+          font-size: 26px;
           color: var(--gold-bright);
-          font-weight: 700;
-          font-size: 14px;
+          line-height: 1;
+        }
+        .cap-score em {
+          font-size: 13px;
+          color: var(--mist);
+          font-style: normal;
+        }
+        .cap-score-bar {
+          flex: 1;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.07);
+          border-radius: 99px;
+          overflow: hidden;
+        }
+        .cap-score-fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--ember), var(--gold-bright));
+          border-radius: 99px;
         }
         .cap-q {
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 13.5px;
+          line-height: 1.6;
           color: var(--parchment);
-          margin-bottom: 8px;
         }
         .cap-summary {
           font-size: 13px;
@@ -799,7 +999,33 @@ export default function CardsPage() {
           font-size: 12.5px;
           line-height: 1.5;
           color: var(--ember);
-          margin-top: 6px;
+        }
+        .cap-suggested {
+          border: 1px solid rgba(201, 162, 75, 0.3);
+          border-radius: 10px;
+          padding: 12px 14px;
+          background: rgba(201, 162, 75, 0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .cap-suggested-label {
+          font-size: 12px;
+          color: var(--gold-bright);
+          font-weight: 600;
+          letter-spacing: 0.06em;
+        }
+        .cap-suggested-note {
+          font-size: 11.5px;
+          color: var(--mist);
+          opacity: 0.7;
+          line-height: 1.4;
+        }
+        .cap-suggested-text {
+          font-size: 13px;
+          line-height: 1.75;
+          color: var(--parchment);
+          white-space: pre-wrap;
         }
         .cap-foot {
           text-align: center;

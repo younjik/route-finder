@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [
         {
           role: "user",
@@ -29,12 +29,19 @@ export async function POST(req: NextRequest) {
             "변환 과정의 사소한 오탈자나 띄어쓰기는 감안하고, 내용과 구조, 구체성, 직무 적합성을 중심으로 채점하세요.\n\n" +
             `[면접 질문]\n${question}\n\n` +
             `[지원자 답변]\n${transcript}\n\n` +
-            "반드시 아래 JSON 형식으로만 응답하세요. 코드펜스나 설명 없이 JSON 객체 하나만 출력합니다.\n" +
+            "반드시 아래 JSON 형식으로만 응답하세요. 코드펜스나 설명 없이 JSON 객체 하나만 출력합니다.\n\n" +
+            "suggestedAnswer 작성 규칙:\n" +
+            "- 지원자가 실제로 언급한 내용만 사용하여 더 명확하고 설득력 있게 재구성합니다.\n" +
+            "- 지원자가 언급하지 않은 경험, 수치, 성과, 역할은 절대 추가하지 않습니다.\n" +
+            "- 구체적인 사실을 확인할 수 없는 내용은 임의로 만들지 않습니다.\n" +
+            "- STAR 구조(상황→과제→행동→결과)가 자연스럽게 드러나도록 문장을 다듬습니다.\n" +
+            "- 구어체를 면접에 적합한 격식체로 바꾸되, 지원자의 핵심 메시지는 그대로 유지합니다.\n\n" +
             `{
-  "score": 7,                         // 1~10 정수
-  "strengths": ["잘한 점1", "잘한 점2"],     // 2~3개, 구체적으로
-  "improvements": ["개선점1", "개선점2"],    // 2~3개, 실행 가능한 조언
-  "summary": "한두 문장 총평"
+  "score": 7,
+  "strengths": ["잘한 점1", "잘한 점2"],
+  "improvements": ["개선점1", "개선점2"],
+  "summary": "한두 문장 총평",
+  "suggestedAnswer": "지원자의 답변을 면접에 적합하게 재구성한 추천 답변 (3~5문장)"
 }`,
         },
       ],
@@ -61,6 +68,7 @@ export async function POST(req: NextRequest) {
       strengths: parsed.strengths ?? [],
       improvements: parsed.improvements ?? [],
       summary: parsed.summary ?? "",
+      suggestedAnswer: parsed.suggestedAnswer ?? "",
     };
 
     return NextResponse.json(evaluation);
