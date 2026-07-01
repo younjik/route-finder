@@ -342,12 +342,16 @@ export default function CardsPage() {
         }
         .top {
           flex-shrink: 0;
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr auto 1fr;
           align-items: center;
-          justify-content: space-between;
           margin-bottom: 10px;
         }
+        .top > .back-btn {
+          justify-self: start;
+        }
         .top-right {
+          justify-self: end;
           display: flex;
           align-items: center;
           gap: 8px;
