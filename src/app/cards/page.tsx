@@ -15,6 +15,16 @@ export default function CardsPage() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  function toggleAccordion(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
   const summaryRef = useRef<HTMLDivElement>(null);
   const spreadRef = useRef<HTMLElement>(null);
 
@@ -269,21 +279,54 @@ export default function CardsPage() {
               </div>
 
               <div className="cap-list">
-                {answeredList.map((a) => (
-                  <div className="cap-item" key={a.questionId}>
-                    <div className="cap-item-top">
-                      <span className="cap-arcana serif">{a.arcanaKo}</span>
-                      <span className="cap-score">{a.evaluation.score}/10</span>
+                {answeredList.map((a) => {
+                  const isOpen = expandedIds.has(a.questionId);
+                  const category = data.questions.find((q) => q.id === a.questionId)?.category ?? "";
+                  return (
+                    <div key={a.questionId} className={`cap-item${isOpen ? " open" : ""}`}>
+                      <button
+                        className="cap-header"
+                        onClick={() => toggleAccordion(a.questionId)}
+                        aria-expanded={isOpen}
+                      >
+                        <div className="cap-header-info">
+                          <span className="cap-arcana serif">{a.arcanaKo}</span>
+                          {category && <span className="cap-category">{category}</span>}
+                        </div>
+                        <span className={`cap-chevron${isOpen ? " up" : ""}`}>▾</span>
+                      </button>
+                      {isOpen && (
+                        <div className="cap-body">
+                          <div className="cap-score-row">
+                            <span className="cap-score serif">
+                              {a.evaluation.score}<em>/10</em>
+                            </span>
+                            <div className="cap-score-bar">
+                              <div
+                                className="cap-score-fill"
+                                style={{ width: `${a.evaluation.score * 10}%` }}
+                              />
+                            </div>
+                          </div>
+                          <p className="cap-q">{a.question}</p>
+                          <p className="cap-summary">{a.evaluation.summary}</p>
+                          {a.evaluation.improvements[0] && (
+                            <p className="cap-tip">▸ {a.evaluation.improvements[0]}</p>
+                          )}
+                          {a.evaluation.suggestedAnswer && (
+                            <div className="cap-suggested">
+                              <div className="cap-suggested-label">✦ 추천 답변 예시</div>
+                              <p className="cap-suggested-note">
+                                내가 말한 내용만을 바탕으로 재구성한 예시입니다.
+                              </p>
+                              <p className="cap-suggested-text">{a.evaluation.suggestedAnswer}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <p className="cap-q">{a.question}</p>
-                    <p className="cap-summary">{a.evaluation.summary}</p>
-                    {a.evaluation.improvements[0] && (
-                      <p className="cap-tip">
-                        ▸ {a.evaluation.improvements[0]}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="cap-foot">타로 면접 · Arcana Interview</div>
@@ -638,37 +681,109 @@ export default function CardsPage() {
           background: var(--line);
         }
 
+        /* ── 아코디언 결과 목록 ── */
         .cap-list {
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 8px;
         }
         .cap-item {
           border: 1px solid var(--line-soft);
           border-radius: 12px;
-          padding: 16px 18px;
+          overflow: hidden;
           background: rgba(255, 255, 255, 0.02);
+          transition: border-color 0.2s;
         }
-        .cap-item-top {
+        .cap-item.open {
+          border-color: rgba(238, 160, 214, 0.38);
+          background: rgba(238, 160, 214, 0.03);
+        }
+        .cap-header {
+          width: 100%;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 8px;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 14px 18px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s;
+        }
+        .cap-header:hover {
+          background: rgba(255, 255, 255, 0.025);
+        }
+        .cap-header-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex: 1;
+          min-width: 0;
         }
         .cap-arcana {
           color: var(--gold);
           font-size: 15px;
+          flex-shrink: 0;
+        }
+        .cap-category {
+          font-size: 11px;
+          color: #f8d0ef;
+          border: 1px solid rgba(238, 160, 214, 0.4);
+          padding: 3px 10px;
+          border-radius: 99px;
+          background: rgba(238, 160, 214, 0.07);
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+        .cap-chevron {
+          color: var(--mist);
+          font-size: 16px;
+          flex-shrink: 0;
+          line-height: 1;
+          transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .cap-chevron.up {
+          transform: rotate(180deg);
+        }
+        .cap-body {
+          border-top: 1px solid var(--line-soft);
+          padding: 14px 18px 18px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .cap-score-row {
+          display: flex;
+          align-items: center;
+          gap: 14px;
         }
         .cap-score {
+          font-size: 26px;
           color: var(--gold-bright);
-          font-weight: 700;
-          font-size: 14px;
+          line-height: 1;
+        }
+        .cap-score em {
+          font-size: 13px;
+          color: var(--mist);
+          font-style: normal;
+        }
+        .cap-score-bar {
+          flex: 1;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.07);
+          border-radius: 99px;
+          overflow: hidden;
+        }
+        .cap-score-fill {
+          height: 100%;
+          background: linear-gradient(90deg, var(--ember), var(--gold-bright));
+          border-radius: 99px;
         }
         .cap-q {
-          font-size: 14px;
-          line-height: 1.5;
+          font-size: 13.5px;
+          line-height: 1.6;
           color: var(--parchment);
-          margin-bottom: 8px;
         }
         .cap-summary {
           font-size: 13px;
@@ -679,7 +794,33 @@ export default function CardsPage() {
           font-size: 12.5px;
           line-height: 1.5;
           color: var(--ember);
-          margin-top: 6px;
+        }
+        .cap-suggested {
+          border: 1px solid rgba(201, 162, 75, 0.3);
+          border-radius: 10px;
+          padding: 12px 14px;
+          background: rgba(201, 162, 75, 0.04);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .cap-suggested-label {
+          font-size: 12px;
+          color: var(--gold-bright);
+          font-weight: 600;
+          letter-spacing: 0.06em;
+        }
+        .cap-suggested-note {
+          font-size: 11.5px;
+          color: var(--mist);
+          opacity: 0.7;
+          line-height: 1.4;
+        }
+        .cap-suggested-text {
+          font-size: 13px;
+          line-height: 1.75;
+          color: var(--parchment);
+          white-space: pre-wrap;
         }
         .cap-foot {
           text-align: center;

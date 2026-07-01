@@ -41,7 +41,7 @@ export function AnswerDrawer({
   onClose: () => void;
   onSaved: (card: AnsweredCard) => void;
 }) {
-  const { error: recError, start, stop } = useRecorder();
+  const { error: recError, start, stop, abort } = useRecorder();
   const [phase, setPhase] = useState<Phase>(existing ? "done" : "intro");
   const [flipped, setFlipped] = useState(false);
   const [sparkle, setSparkle] = useState(false);
@@ -51,6 +51,7 @@ export function AnswerDrawer({
     existing?.evaluation ?? null
   );
   const [error, setError] = useState<string | null>(null);
+  const [resultMode, setResultMode] = useState(false);
   const [hintOpen, setHintOpen] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const arcMeta = ARCANA[question.id];
@@ -62,6 +63,15 @@ export function AnswerDrawer({
     const t3 = setTimeout(() => setSparkle(false), 1500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+
+  useEffect(() => {
+    if (phase === "done") {
+      // existing 카드 재열람 시 플립 애니메이션(~840ms) 완료 후 확장, 신규 평가는 즉시
+      const delay = existing ? 920 : 0;
+      const t = setTimeout(() => setResultMode(true), delay);
+      return () => clearTimeout(t);
+    }
+  }, [phase]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -76,7 +86,7 @@ export function AnswerDrawer({
     intervalRef.current = null;
   }
 
-  useEffect(() => () => clearTimer(), []);
+  useEffect(() => () => { clearTimer(); abort(); }, []);
 
   function beginPrep() {
     setPhase("prep");
@@ -286,6 +296,20 @@ export function AnswerDrawer({
                     <h4>개선할 점</h4>
                     <ul>{evaluation.improvements.map((s, i) => <li key={i}>{s}</li>)}</ul>
                   </div>
+                  <div className="summary">
+                    <span className="serif quote">"</span>
+                    {evaluation.summary}
+                  </div>
+                  {evaluation.suggestedAnswer && (
+                    <details className="suggested">
+                      <summary>✦ 추천 답변 예시 보기</summary>
+                      <p className="suggested-note">
+                        내가 말한 내용을 바탕으로 재구성한 예시입니다. 새로운 사실은 추가되지 않았습니다.
+                      </p>
+                      <p className="suggested-text">{evaluation.suggestedAnswer}</p>
+                    </details>
+                  )}
+                  <button className="ghost" onClick={onClose}>다음 카드 고르기 →</button>
                 </div>
                 <div className="summary">
                   <span className="serif quote">"</span>
@@ -478,7 +502,7 @@ export function AnswerDrawer({
         /* ── 3D flip wrapper ── */
         .card-wrap {
           perspective: 1400px;
-          width: 100%;
+          width: min(400px, 94vw, calc((100dvh - 64px) / 1.7));
           flex-shrink: 0;
         }
 
@@ -491,6 +515,31 @@ export function AnswerDrawer({
           border-radius: 18px;
         }
         .card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+
+        /* ── 결과 모드: 고정 비율 해제, 콘텐츠 높이로 자연 확장 ── */
+        .card-wrap.result-mode {
+          width: min(420px, 94vw);
+        }
+        .card-wrap.result-mode .card-inner {
+          aspect-ratio: auto !important;
+          max-height: none !important;
+          transform: none !important;
+          transition: none !important;
+          transform-style: flat !important;
+        }
+        .card-wrap.result-mode .back-face {
+          display: none;
+        }
+        .card-wrap.result-mode .front-face {
+          position: relative !important;
+          inset: auto !important;
+          transform: none !important;
+          overflow-y: visible !important;
+          height: auto !important;
+        }
+        .card-wrap.result-mode .card-body {
+          justify-content: flex-start;
+        }
 
         /* ── 뒷면 ── */
         .back-face {
@@ -543,11 +592,13 @@ export function AnswerDrawer({
           box-shadow: 0 28px 70px rgba(0,0,0,0.65);
           padding: 22px 20px 24px;
           overflow-y: auto;
+          scrollbar-width: none;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           gap: 16px;
         }
+        .front-face::-webkit-scrollbar { display: none; }
 
         /* 카드 중앙: 글리프 · 주제 · 키워드 */
         .card-center {
@@ -761,12 +812,12 @@ export function AnswerDrawer({
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .result { display: flex; flex-direction: column; gap: 20px; }
-        .score-row { display: flex; align-items: center; gap: 18px; }
-        .big-score { font-size: 52px; color: var(--gold-bright); line-height: 1; }
-        .big-score span { font-size: 20px; color: var(--mist); }
+        .result { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .score-row { display: flex; align-items: center; gap: 16px; }
+        .big-score { font-size: 46px; color: var(--gold-bright); line-height: 1; }
+        .big-score span { font-size: 18px; color: var(--mist); }
         .score-bar {
-          flex: 1; height: 10px;
+          flex: 1; height: 8px;
           background: rgba(255,255,255,0.07);
           border-radius: 99px; overflow: hidden;
         }
@@ -779,24 +830,24 @@ export function AnswerDrawer({
         .transcript {
           border: 1px solid var(--line-soft);
           border-radius: 10px;
-          padding: 12px 16px;
+          padding: 10px 14px;
         }
         .transcript summary { cursor: pointer; font-size: 13px; color: var(--mist); }
-        .transcript p { margin-top: 10px; font-size: 14px; line-height: 1.7; color: var(--parchment); }
-        .feedback { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .transcript p { margin-top: 8px; font-size: 13.5px; line-height: 1.7; color: var(--parchment); }
+        .feedback { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 500px) { .feedback { grid-template-columns: 1fr; } }
-        .fb-block { border: 1px solid var(--line-soft); border-radius: 12px; padding: 16px 18px; }
-        .fb-block h4 { font-size: 13px; letter-spacing: 0.04em; margin-bottom: 10px; }
+        .fb-block { border: 1px solid var(--line-soft); border-radius: 12px; padding: 14px 16px; }
+        .fb-block h4 { font-size: 12.5px; letter-spacing: 0.04em; margin-bottom: 8px; }
         .fb-block.good h4 { color: var(--gold-bright); }
         .fb-block.improve h4 { color: var(--ember); }
-        .fb-block ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .fb-block ul { list-style: none; display: flex; flex-direction: column; gap: 7px; }
         .fb-block li {
-          font-size: 13.5px; line-height: 1.6; color: var(--parchment);
+          font-size: 13px; line-height: 1.6; color: var(--parchment);
           padding-left: 16px; position: relative;
         }
         .fb-block li::before { content: "·"; position: absolute; left: 4px; color: var(--gold); }
         .summary {
-          font-size: 15px; line-height: 1.7; color: var(--mist);
+          font-size: 14.5px; line-height: 1.7; color: var(--mist);
           border-left: 2px solid var(--gold); padding-left: 16px;
         }
         .summary .quote { color: var(--gold); font-size: 28px; margin-right: 4px; line-height: 0; }
