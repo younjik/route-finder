@@ -83,8 +83,8 @@ export default function CardsPage() {
         // 두 프레임 뒤에 is-resetting 해제 → 덱→아치 transition 발화
         setTimeout(() => {
           setIsResetting(false);
-          // 마지막 카드 도착까지 (55ms × 9 + 650ms = 1145ms)
-          setTimeout(() => setIsDealing(false), 1200);
+          // 마지막 카드 도착까지 (100ms × 9 + 450ms = 1350ms)
+          setTimeout(() => setIsDealing(false), 1400);
         }, 32);
       }, 400);
     }, 1000);
@@ -252,7 +252,7 @@ export default function CardsPage() {
           const zIdx = Math.round(10 - Math.abs(i - 4.5));
           const deckRot = ((i - 4.5) * 2).toFixed(1);
           const collectDelay = `${i * 50}ms`;
-          const dealDelay = `${i * 55}ms`;
+          const dealDelay = `${(9 - i) * 100}ms`;
           return (
             <div
               key={i}
@@ -625,12 +625,13 @@ export default function CardsPage() {
           100% { transform: rotate(var(--deck-rot)) translateX(0)     translateY(0); }
         }
 
-        /* ── 리셋 Phase 3: 덱 위치에서 아치로 분배 (ease-out: 빠르게 날아가 정착) ── */
+        /* ── 리셋 Phase 3: 덱에서 아치로 한 장씩 분배 ── */
         .arch-content.is-dealing .card-slot {
           transition:
-            left      0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms),
-            bottom    0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms),
-            transform 0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms) !important;
+            left      0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
+            bottom    0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
+            transform 0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms) !important;
+          z-index: calc(var(--slot-i, 0) + 20) !important;
           pointer-events: none;
         }
 
