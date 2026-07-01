@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import type { Evaluation } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,24 +18,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       max_tokens: 2000,
       messages: [
         {
-          role: "user",
+          role: "system",
           content:
-            "당신은 경험 많은 채용 면접관입니다. 아래 면접 질문에 대한 지원자의 음성 답변(STT 변환 텍스트)을 평가하세요. " +
+            "당신은 경험 많은 채용 면접관입니다. 면접 질문에 대한 지원자의 음성 답변(STT 변환 텍스트)을 평가하세요. " +
             "변환 과정의 사소한 오탈자나 띄어쓰기는 감안하고, 내용과 구조, 구체성, 직무 적합성을 중심으로 채점하세요.\n\n" +
-            `[면접 질문]\n${question}\n\n` +
-            `[지원자 답변]\n${transcript}\n\n` +
-            "반드시 아래 JSON 형식으로만 응답하세요. 코드펜스나 설명 없이 JSON 객체 하나만 출력합니다.\n\n" +
             "suggestedAnswer 작성 규칙:\n" +
             "- 지원자가 실제로 언급한 내용만 사용하여 더 명확하고 설득력 있게 재구성합니다.\n" +
             "- 지원자가 언급하지 않은 경험, 수치, 성과, 역할은 절대 추가하지 않습니다.\n" +
-            "- 구체적인 사실을 확인할 수 없는 내용은 임의로 만들지 않습니다.\n" +
             "- STAR 구조(상황→과제→행동→결과)가 자연스럽게 드러나도록 문장을 다듬습니다.\n" +
             "- 구어체를 면접에 적합한 격식체로 바꾸되, 지원자의 핵심 메시지는 그대로 유지합니다.\n\n" +
+            "반드시 아래 JSON 형식으로만 응답하세요. 코드펜스나 설명 없이 JSON 객체 하나만 출력합니다.\n\n" +
             `{
   "score": 7,
   "strengths": ["잘한 점1", "잘한 점2"],
@@ -44,13 +41,16 @@ export async function POST(req: NextRequest) {
   "suggestedAnswer": "지원자의 답변을 면접에 적합하게 재구성한 추천 답변 (3~5문장)"
 }`,
         },
+        {
+          role: "user",
+          content:
+            `[면접 질문]\n${question}\n\n` +
+            `[지원자 답변]\n${transcript}`,
+        },
       ],
     });
 
-    const raw = msg.content
-      .filter((b) => b.type === "text")
-      .map((b: any) => b.text)
-      .join("\n")
+    const raw = (response.choices[0].message.content ?? "")
       .replace(/```json|```/g, "")
       .trim();
 

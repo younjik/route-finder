@@ -514,24 +514,15 @@ export default function UploadPage() {
     setLoadProgress(0);
     setLoading(true);
 
-    // 60fps로 부드럽게 채움: phase 0 = 2초, phase 1~8 = 6초씩
-    let phase = 0;
-    let phaseStart = Date.now();
+    // 0.9초마다 1%씩 증가, 최대 90% (API 완료 시 100% 점프)
+    let prog = 0;
     setLoadPhase(0);
 
     const progInterval = setInterval(() => {
-      const elapsed = Date.now() - phaseStart;
-      const duration = phase === 0 ? 2000 : 6000;
-      const t = Math.min(elapsed / duration, 1);
-      const current = phase * 10 + 10 * t;
-      setLoadProgress(Math.min(parseFloat(current.toFixed(1)), 90));
-
-      if (t >= 1 && phase < 8) {
-        phase++;
-        phaseStart = Date.now();
-        setLoadPhase(phase);
-      }
-    }, 16);
+      prog = Math.min(prog + 1, 90);
+      setLoadProgress(prog);
+      setLoadPhase(Math.floor(prog / 10));
+    }, 900);
 
     try {
       const fd = new FormData();
