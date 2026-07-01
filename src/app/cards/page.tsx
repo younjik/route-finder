@@ -297,11 +297,6 @@ export default function CardsPage() {
         <button className="back-btn" onClick={() => router.push("/")}>
           ← 처음으로
         </button>
-        <div className="progress">
-          <span className="count">{answeredCount}</span>
-          <span className="slash">/ 10</span>
-          <span className="lbl">답변 완료</span>
-        </div>
         <div className="top-right">
           <button
             className="reset-btn"
@@ -322,6 +317,11 @@ export default function CardsPage() {
 
       <div className="body-center">
         <div className="intro-band">
+          <div className="progress">
+            <span className="count">{answeredCount}</span>
+            <span className="slash">/ 10</span>
+            <span className="lbl">답변 완료</span>
+          </div>
           <div className="eyebrow">THE SPREAD</div>
           <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
           <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
@@ -523,16 +523,12 @@ export default function CardsPage() {
         }
         .top {
           flex-shrink: 0;
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
+          display: flex;
+          justify-content: space-between;
           align-items: center;
           margin-bottom: 10px;
         }
-        .top > .back-btn {
-          justify-self: start;
-        }
         .top-right {
-          justify-self: end;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -582,7 +578,9 @@ export default function CardsPage() {
         .progress {
           display: flex;
           align-items: baseline;
+          justify-content: center;
           gap: 6px;
+          margin-bottom: 8px;
         }
         .progress .count {
           font-family: var(--font-display);
