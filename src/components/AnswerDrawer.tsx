@@ -532,8 +532,9 @@ export function AnswerDrawer({
         /* ── 3D flip wrapper ── */
         .card-wrap {
           perspective: 1400px;
-          /* 바닥에 깔린 카드와 동일한 2:3 비율 기준 너비 (height = width * 1.5) */
-          width: min(400px, 94vw, calc((100dvh - 64px) / 1.5));
+          /* card-col 너비(최대 300px, 모바일 240px)를 넘지 않도록 100%로 제한 —
+             예전엔 400px까지 늘어나 옆 content-col과 겹쳤음 */
+          width: min(100%, calc((100dvh - 64px) / 1.5));
           flex-shrink: 0;
         }
 
@@ -593,8 +594,9 @@ export function AnswerDrawer({
           transform: rotateY(180deg);
           backface-visibility: hidden;
           border-radius: 18px;
-          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
-          background: #15122c url("/앞면 수정.png") center center / 110%
+          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움.
+             상하 여백이 비대칭(상 5% / 하 8.3%)이라 세로 위치도 32%로 보정 */
+          background: #15122c url("/앞면 수정.png") center 32% / 110%
             no-repeat;
           border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
@@ -652,7 +654,7 @@ export function AnswerDrawer({
               rgba(201, 162, 75, 0.12),
               transparent 60%
             ),
-            url("/앞면 수정.png") center center / 116% no-repeat;
+            url("/앞면 수정.png") center 32% / 110% no-repeat;
           border-color: rgba(201, 162, 75, 0.7);
           box-shadow:
             0 0 0 1px rgba(201, 162, 75, 0.35),
