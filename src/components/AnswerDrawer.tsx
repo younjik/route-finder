@@ -257,7 +257,7 @@ export function AnswerDrawer({
                   {arcMeta && <div className="card-glyph serif">{arcMeta.glyph}</div>}
                   <div className="keyword-wrap">
                     <span className="keyword-deco">— </span>
-                    <span className="keyword serif">{question.category}</span>
+                    <span className="keyword">{question.category}</span>
                     <span className="keyword-deco"> —</span>
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export function AnswerDrawer({
         <div className={`content-col${question.difficulty === "advanced" ? " advanced" : ""}`}>
           <div className="content-scroll">
             <div className="q-wrap">
-              <h2 className={`q-text serif${questionHidden && phase !== "done" ? " q-hidden" : ""}`}>
+              <h2 className={`q-text${questionHidden && phase !== "done" ? " q-hidden" : ""}`}>
                 {highlightKeywords(question.question, question.keywords ?? [])}
               </h2>
               {phase !== "done" && (
@@ -704,10 +704,12 @@ export function AnswerDrawer({
           padding: 6px 0;
         }
         .keyword {
-          font-size: clamp(19px, 5vw, 27px);
+          font-family: "Renaissance Secret", serif;
+          font-size: clamp(22px, 5.6vw, 31px);
           font-weight: 700;
           color: var(--gold-bright);
           letter-spacing: 0.12em;
+          -webkit-text-stroke: 0.6px currentColor;
           text-shadow:
             0 0 30px rgba(201, 162, 75, 0.5),
             0 0 60px rgba(201, 162, 75, 0.2);
@@ -727,6 +729,7 @@ export function AnswerDrawer({
           margin-bottom: 20px;
         }
         .q-text {
+          font-family: var(--font-body);
           font-size: clamp(18px, 2.4vw, 23px);
           line-height: 1.6;
           margin-bottom: 0;

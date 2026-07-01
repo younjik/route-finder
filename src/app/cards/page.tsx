@@ -424,7 +424,9 @@ export default function CardsPage() {
             <div className="capture" ref={summaryRef}>
               <div className="cap-head">
                 <div className="cap-eyebrow">ARCANA · INTERVIEW READING</div>
-                <h2 className="serif">오늘의 면접 리딩</h2>
+                <h2 className="serif" style={{ fontFamily: '"Renaissance Secret", serif' }}>
+                  오늘의 면접 리딩
+                </h2>
                 <div className="cap-stats">
                   <div className="stat">
                     <div className="stat-num serif">{avgScore}</div>
@@ -455,7 +457,6 @@ export default function CardsPage() {
                         aria-expanded={isOpen}
                       >
                         <div className="cap-header-info">
-                          <span className="cap-arcana serif">{a.arcanaKo}</span>
                           {category && (
                             <span className="cap-category">{category}</span>
                           )}
@@ -990,6 +991,7 @@ export default function CardsPage() {
           border: none;
           cursor: pointer;
           text-align: left;
+          color: var(--parchment);
           transition: background 0.15s;
         }
         .cap-header:hover {
@@ -998,7 +1000,7 @@ export default function CardsPage() {
         .cap-header-info {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 6px;
           flex: 1;
           min-width: 0;
         }

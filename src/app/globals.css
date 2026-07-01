@@ -23,6 +23,13 @@
   font-display: swap;
 }
 @font-face {
+  font-family: "YeonSung";
+  src: url("/fonts/YeonSung-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   /* 숫자(0-9)에만 적용되는 폰트 — unicode-range로 제한해 다른 글자는 기존 폰트를 그대로 사용 */
   font-family: "Omyu Pretty";
   src: url("/fonts/omyu%20pretty.ttf") format("truetype");

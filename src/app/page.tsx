@@ -132,6 +132,7 @@ function MultiFileSlot({
           font-size: 21px;
           letter-spacing: 0.02em;
           margin-bottom: 5px;
+          -webkit-text-stroke: 0.6px currentColor;
         }
         .slot-sub {
           font-size: 13px;
@@ -689,6 +690,8 @@ export default function UploadPage() {
           font-weight: 600;
           line-height: 1.12;
           letter-spacing: 0.01em;
+          color: #f5f0fa;
+          -webkit-text-stroke: 0.6px #f5f0fa;
         }
         .lede {
           margin: 22px auto 0;
@@ -732,6 +735,7 @@ export default function UploadPage() {
           color: var(--gold-bright);
           margin-bottom: 5px;
           text-align: center;
+          -webkit-text-stroke: 0.6px currentColor;
         }
         .kw-picker-sub {
           font-size: 12px;
@@ -836,10 +840,17 @@ export default function UploadPage() {
         }
         .cta {
           width: 100%;
-          padding: 18px;
-          font-size: 17px;
+          padding: 15px 18px 21px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: "Renaissance Secret", serif;
+          font-size: 20px;
           font-weight: 600;
+          line-height: 1;
           letter-spacing: 0.04em;
+          text-indent: 0.04em;
+          -webkit-text-stroke: 0.6px currentColor;
           color: var(--void);
           background: linear-gradient(180deg, var(--gold-bright), var(--gold));
           border: none;
