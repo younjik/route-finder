@@ -317,11 +317,6 @@ export default function CardsPage() {
 
       <div className="body-center">
         <div className="intro-band">
-          <div className="progress">
-            <span className="count">{answeredCount}</span>
-            <span className="slash">/ 10</span>
-            <span className="lbl">답변 완료</span>
-          </div>
           <div className="eyebrow">ARCANA INTERVIEW</div>
           <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
           <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
@@ -575,30 +570,6 @@ export default function CardsPage() {
           opacity: 0.3;
           cursor: not-allowed;
         }
-        .progress {
-          display: flex;
-          align-items: baseline;
-          justify-content: center;
-          gap: 6px;
-          margin-bottom: 8px;
-        }
-        .progress .count {
-          font-family: var(--font-display);
-          font-size: 26px;
-          color: var(--gold-bright);
-          text-shadow: 0 0 16px rgba(243, 182, 224, 0.7);
-        }
-        .progress .slash {
-          color: var(--mist);
-          font-size: 15px;
-        }
-        .progress .lbl {
-          font-size: 12px;
-          color: var(--parchment);
-          margin-left: 4px;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-        }
-
         .body-center {
           flex: 1;
           min-height: 0;
