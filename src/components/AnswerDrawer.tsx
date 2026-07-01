@@ -379,9 +379,7 @@ export function AnswerDrawer({
                   </div>
                 </div>
                 <div className="summary">
-                  <span className="serif quote open">"</span>
                   {evaluation.summary}
-                  <span className="serif quote close">"</span>
                 </div>
                 {evaluation.suggestedAnswer && (
                   <details className="suggested">
@@ -1061,9 +1059,6 @@ export function AnswerDrawer({
           font-size: 14.5px; line-height: 1.7; color: var(--mist);
           border-left: 2px solid var(--gold); padding-left: 16px;
         }
-        .summary .quote { color: var(--gold); font-size: 28px; }
-        .summary .quote.open { margin-right: 4px; line-height: 0; }
-        .summary .quote.close { margin-left: 4px; line-height: 0.6; vertical-align: -6px; }
 
         /* ── 면접 힌트 ── */
         .hint-panel {
