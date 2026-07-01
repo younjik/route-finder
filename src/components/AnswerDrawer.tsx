@@ -274,6 +274,15 @@ export function AnswerDrawer({
                     <span className="serif quote">"</span>
                     {evaluation.summary}
                   </div>
+                  {evaluation.suggestedAnswer && (
+                    <details className="suggested">
+                      <summary>✦ 추천 답변 예시 보기</summary>
+                      <p className="suggested-note">
+                        내가 말한 내용을 바탕으로 재구성한 예시입니다. 새로운 사실은 추가되지 않았습니다.
+                      </p>
+                      <p className="suggested-text">{evaluation.suggestedAnswer}</p>
+                    </details>
+                  )}
                   <button className="ghost" onClick={onClose}>다음 카드 고르기 →</button>
                 </div>
               )}
@@ -659,6 +668,33 @@ export function AnswerDrawer({
           border-left: 2px solid var(--gold); padding-left: 16px;
         }
         .summary .quote { color: var(--gold); font-size: 28px; margin-right: 4px; line-height: 0; }
+        .suggested {
+          border: 1px solid rgba(201,162,75,0.35);
+          border-radius: 12px;
+          padding: 14px 18px;
+          background: rgba(201,162,75,0.05);
+        }
+        .suggested summary {
+          cursor: pointer;
+          font-size: 13.5px;
+          color: var(--gold-bright);
+          letter-spacing: 0.04em;
+          font-weight: 600;
+        }
+        .suggested-note {
+          margin-top: 10px;
+          font-size: 12px;
+          color: var(--mist);
+          opacity: 0.7;
+          line-height: 1.5;
+        }
+        .suggested-text {
+          margin-top: 10px;
+          font-size: 14px;
+          line-height: 1.8;
+          color: var(--parchment);
+          white-space: pre-wrap;
+        }
       `}</style>
     </div>
   );

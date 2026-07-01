@@ -18,6 +18,7 @@ export interface Evaluation {
   strengths: string[];   // 잘한 점
   improvements: string[];// 개선할 점
   summary: string;       // 총평
+  suggestedAnswer: string; // 추천 답변 예시 (사용자 내용만 활용하여 재구성)
 }
 
 export interface AnsweredCard {
