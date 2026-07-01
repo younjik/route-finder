@@ -421,7 +421,6 @@ export default function CardsPage() {
                         aria-expanded={isOpen}
                       >
                         <div className="cap-header-info">
-                          <span className="cap-arcana serif">{a.arcanaKo}</span>
                           {category && <span className="cap-category">{category}</span>}
                         </div>
                         <span className={`cap-chevron${isOpen ? " up" : ""}`}>▾</span>
@@ -925,11 +924,6 @@ export default function CardsPage() {
           gap: 10px;
           flex: 1;
           min-width: 0;
-        }
-        .cap-arcana {
-          color: var(--gold);
-          font-size: 15px;
-          flex-shrink: 0;
         }
         .cap-category {
           font-size: 11px;
