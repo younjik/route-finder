@@ -322,7 +322,7 @@ export default function CardsPage() {
             <span className="slash">/ 10</span>
             <span className="lbl">답변 완료</span>
           </div>
-          <div className="eyebrow">THE SPREAD</div>
+          <div className="eyebrow">ARCANA INTERVIEW</div>
           <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
           <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
           {data.keywords.length > 0 && (
