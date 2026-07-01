@@ -34,9 +34,6 @@ export function TarotCard({
         {/* 앞면 */}
         <div className="face front">
           <div className="numeral serif">{arc.numeral}</div>
-          {advanced && flipped && (
-            <div className="advanced-mark">✦ 심화</div>
-          )}
           <div className="glyph serif">{arc.glyph}</div>
           {flipped && category
             ? <div className="name serif category">{category}</div>
@@ -150,20 +147,6 @@ export function TarotCard({
         .card.advanced .name-en { color: rgba(245,230,192,0.55); }
         .card.advanced .numeral { color: var(--gold-bright); }
 
-        .advanced-mark {
-          position: absolute;
-          top: 10px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 8px;
-          letter-spacing: 0.18em;
-          color: #1c1405;
-          background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-          padding: 2px 8px;
-          border-radius: 99px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
       `}</style>
     </button>
   );

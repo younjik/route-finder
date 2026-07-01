@@ -193,6 +193,38 @@ export function AnswerDrawer({
     }
   }
 
+  // 테스트용: 마이크 녹음 없이 더미 답변으로 바로 평가 → 결과 화면 확인
+  async function skipToResultForTesting() {
+    clearTimer();
+    const dummyTranscript = "(테스트) 마이크 녹음 없이 결과 화면을 확인하기 위한 더미 답변입니다.";
+    setTranscript(dummyTranscript);
+    setPhase("evaluating");
+    try {
+      const evalRes = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: question.question, transcript: dummyTranscript }),
+      });
+      const evalData = await evalRes.json();
+      if (!evalRes.ok) throw new Error(evalData.error ?? "평가 실패");
+      const ev = evalData as Evaluation;
+      setEvaluation(ev);
+      setPhase("done");
+
+      onSaved({
+        questionId: question.id,
+        arcanaKo: question.arcanaKo,
+        question: question.question,
+        transcript: dummyTranscript,
+        evaluation: ev,
+        answeredAt: Date.now(),
+      });
+    } catch (e: any) {
+      setError(e.message);
+      setPhase("intro");
+    }
+  }
+
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="split-wrap" onClick={(e) => e.stopPropagation()}>
@@ -303,6 +335,13 @@ export function AnswerDrawer({
                   </button>
                 </div>
               )}
+
+              {process.env.NODE_ENV !== "production" &&
+                (phase === "intro" || phase === "prep" || phase === "recording") && (
+                  <button className="dev-skip" onClick={skipToResultForTesting}>
+                    🧪 테스트: 마이크 없이 결과 화면 바로가기
+                  </button>
+                )}
 
             {(phase === "transcribing" || phase === "evaluating") && (
               <div className="stage">
@@ -843,6 +882,22 @@ export function AnswerDrawer({
         }
         .ghost:hover {
           border-color: var(--gold);
+        }
+
+        /* 개발 중 테스트용 — 마이크 없이 결과로 바로가기 */
+        .dev-skip {
+          margin-top: 10px;
+          background: transparent;
+          border: 1px dashed rgba(224, 113, 159, 0.5);
+          color: var(--ember);
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+        .dev-skip:hover {
+          border-color: var(--ember);
         }
 
         .spinner {
