@@ -575,7 +575,9 @@ export default function CardsPage() {
           margin-left: calc(50% - 50vw);
           /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백 */
           height: calc(var(--R) - var(--d) + var(--card-w) * 1.5 + 30px);
-          overflow: hidden;
+          /* overflow를 여기서 잘라내면 호버 확대(scale) 시 카드 윗부분이 함께 잘림.
+             극단 회전 시 카드가 화면 밖으로 나가는 것은 페이지 스크롤이 잠겨 있어
+             뷰포트 자체가 걸러주므로 여기서 별도로 자를 필요가 없음 */
           margin-bottom: 30px;
           cursor: grab;
           touch-action: none;
