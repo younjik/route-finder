@@ -322,15 +322,13 @@ export default function CardsPage() {
         )}
       </div>
 
-      <section className="spread" ref={spreadRef}>
-        <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`} key={resetKey}>
       <section
         className={`spread${isDragging ? " is-dragging" : ""}`}
         ref={spreadRef}
         onPointerDown={handleSpreadPointerDown}
         onClickCapture={handleSpreadClickCapture}
       >
-        <div className="arch-content">
+        <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`} key={resetKey}>
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];

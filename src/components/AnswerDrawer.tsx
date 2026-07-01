@@ -106,7 +106,7 @@ export function AnswerDrawer({
     intervalRef.current = null;
   }
 
-  useEffect(() => () => { clearTimer(); abort(); }, []);
+  useEffect(() => () => { clearTimer(); }, []);
 
   function beginPrep() {
     setPhase("prep");
