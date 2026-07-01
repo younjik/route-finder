@@ -777,7 +777,7 @@ export default function CardsPage() {
         .spread {
           --card-w: min(clamp(135px, 31dvh, 270px), 42vw);
           --R: clamp(270px, 50dvh, 520px);
-          --d: calc(var(--R) * 0.84);
+          --d: calc(var(--R) * 0.92);
           flex: 0 0 auto;
           position: relative;
           width: 100vw;
