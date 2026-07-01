@@ -30,12 +30,7 @@ export function TarotCard({
     >
       <div className="inner">
         {/* 뒷면 */}
-        <div className="face back">
-          <div className="back-frame">
-            <div className="back-glyph serif">✶</div>
-            <div className="back-lines" />
-          </div>
-        </div>
+        <div className="face back" />
         {/* 앞면 */}
         <div className="face front">
           <div className="numeral serif">{arc.numeral}</div>
@@ -97,31 +92,7 @@ export function TarotCard({
 
         /* 뒷면 */
         .back {
-          background:
-            radial-gradient(circle at 50% 40%, rgba(201,162,75,0.18), transparent 60%),
-            linear-gradient(160deg, #221d44, #14102b);
-        }
-        .back-frame {
-          position: absolute;
-          inset: 8px;
-          border: 1px solid rgba(238,160,214,0.4);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 0 12px rgba(217,142,201,0.15) inset;
-        }
-        .back-glyph {
-          font-size: clamp(28px, 7vw, 44px);
-          color: var(--gold-bright);
-          opacity: 1;
-          text-shadow: 0 0 20px rgba(243,182,224,0.6);
-        }
-        .back-lines {
-          position: absolute;
-          inset: 0;
-          background-image:
-            repeating-linear-gradient(45deg, rgba(201,162,75,0.06) 0 6px, transparent 6px 12px);
+          background: #14102b url('/타로 카드 뒷면.png') center center / cover no-repeat;
         }
 
         /* 앞면 */

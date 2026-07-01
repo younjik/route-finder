@@ -157,12 +157,7 @@ export function AnswerDrawer({
         <div className="card-inner">
 
           {/* ── 뒷면 ── */}
-          <div className="back-face" aria-hidden>
-            <div className="back-frame">
-              <div className="back-glyph serif">✶</div>
-              <div className="back-lines" />
-            </div>
-          </div>
+          <div className="back-face" aria-hidden />
 
           {/* ── 앞면: 질문 & 답변 ── */}
           <div className={`front-face${question.difficulty === "advanced" ? " advanced" : ""}`}>
@@ -313,35 +308,9 @@ export function AnswerDrawer({
           inset: 0;
           backface-visibility: hidden;
           border-radius: 18px;
-          background:
-            radial-gradient(circle at 50% 40%, rgba(201,162,75,0.22), transparent 60%),
-            linear-gradient(160deg, #221d44, #14102b);
+          background: #14102b url('/타로 카드 뒷면.png') center center / cover no-repeat;
           border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0,0,0,0.65);
-        }
-        .back-frame {
-          position: absolute;
-          inset: 18px;
-          border: 1px solid var(--line);
-          border-radius: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .back-glyph {
-          font-size: 72px;
-          color: var(--gold);
-          opacity: 0.9;
-        }
-        .back-lines {
-          position: absolute;
-          inset: 0;
-          background-image: repeating-linear-gradient(
-            45deg,
-            rgba(201,162,75,0.06) 0 6px,
-            transparent 6px 12px
-          );
-          border-radius: 12px;
         }
 
         /* ── 앞면 ── */
