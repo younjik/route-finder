@@ -537,9 +537,6 @@ export function AnswerDrawer({
           -ms-overflow-style: none;
         }
         .content-scroll::-webkit-scrollbar { display: none; }
-        .content-col.advanced .q-text { color: #f5e6c0; opacity: 1; }
-        .content-col.advanced .stage-desc { color: rgba(245,230,192,0.7); }
-        .content-col.advanced .stage-desc b { color: var(--gold-bright); }
 
         /* ── 3D flip wrapper ── */
         .card-wrap {
@@ -681,16 +678,6 @@ export function AnswerDrawer({
             rgba(201, 162, 75, 0.6),
             transparent
           );
-        }
-        .front-face.advanced .q-text {
-          color: #f5e6c0;
-          opacity: 1;
-        }
-        .front-face.advanced .stage-desc {
-          color: rgba(245, 230, 192, 0.7);
-        }
-        .front-face.advanced .stage-desc b {
-          color: var(--gold-bright);
         }
 
         /* 타로 카드 헤더 */
