@@ -95,6 +95,22 @@ function FileSlot({
   );
 }
 
+const DEMO_DATA = {
+  keywords: ["데모", "면접준비", "타로"],
+  questions: [
+    { id: 0, arcana: "The Magician",       arcanaKo: "마법사",          category: "직무역량", difficulty: "normal",   question: "본인이 가진 핵심 역량 중 이 직무에 가장 잘 맞는 것은 무엇인가요?" },
+    { id: 1, arcana: "The High Priestess", arcanaKo: "여사제",          category: "문제해결", difficulty: "normal",   question: "업무 중 예상치 못한 문제가 발생했을 때 어떻게 대처했나요?" },
+    { id: 2, arcana: "The Empress",        arcanaKo: "여황제",          category: "협업",     difficulty: "normal",   question: "팀원과 의견이 충돌했던 경험과 어떻게 해결했는지 말해주세요." },
+    { id: 3, arcana: "The Emperor",        arcanaKo: "황제",            category: "리더십",   difficulty: "advanced", question: "프로젝트를 이끌면서 가장 어려웠던 순간과 그것을 극복한 방법은?" },
+    { id: 4, arcana: "The Hierophant",     arcanaKo: "교황",            category: "가치관",   difficulty: "normal",   question: "회사를 선택할 때 가장 중요하게 생각하는 기준은 무엇인가요?" },
+    { id: 5, arcana: "The Lovers",         arcanaKo: "연인",            category: "의사결정", difficulty: "normal",   question: "여러 선택지 앞에서 결정을 내리는 본인만의 방법이 있나요?" },
+    { id: 6, arcana: "The Chariot",        arcanaKo: "전차",            category: "목표달성", difficulty: "advanced", question: "설정한 목표를 달성하기 위해 특별히 노력했던 경험을 들려주세요." },
+    { id: 7, arcana: "Strength",           arcanaKo: "힘",              category: "위기극복", difficulty: "normal",   question: "극심한 스트레스나 압박을 받았을 때 어떻게 대처하나요?" },
+    { id: 8, arcana: "The Hermit",         arcanaKo: "은둔자",          category: "자기계발", difficulty: "normal",   question: "최근 스스로 새롭게 배우거나 성장한 경험이 있다면 소개해주세요." },
+    { id: 9, arcana: "Wheel of Fortune",   arcanaKo: "운명의 수레바퀴", category: "적응력",   difficulty: "advanced", question: "빠르게 변화하는 환경에서 본인이 어떻게 적응해 왔는지 말해주세요." },
+  ],
+} as const;
+
 export default function UploadPage() {
   const router = useRouter();
   const [resume, setResume] = useState<File | null>(null);
@@ -103,6 +119,12 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null);
 
   const ready = resume && job && !loading;
+
+  function handleDemo() {
+    sessionStorage.setItem("interview:generate", JSON.stringify(DEMO_DATA));
+    sessionStorage.removeItem("interview:answers");
+    router.push("/cards");
+  }
 
   async function handleGenerate() {
     if (!resume || !job) return;
@@ -167,6 +189,13 @@ export default function UploadPage() {
       </button>
 
       <div className="hint">PDF · DOCX 자소서 / PDF · 이미지 채용공고 지원</div>
+
+      {/* TODO: 배포 전 제거 */}
+      <div className="demo-wrap">
+        <button className="demo-btn" onClick={handleDemo}>
+          ⚡ 데모 — PDF 없이 바로 시작
+        </button>
+      </div>
 
       <style jsx>{`
         .wrap {
@@ -249,6 +278,26 @@ export default function UploadPage() {
           font-size: 12.5px;
           color: var(--mist);
           opacity: 0.7;
+        }
+        .demo-wrap {
+          text-align: center;
+          margin-top: 32px;
+          padding-top: 24px;
+          border-top: 1px dashed rgba(201, 162, 75, 0.2);
+        }
+        .demo-btn {
+          background: transparent;
+          border: 1px dashed rgba(201, 162, 75, 0.45);
+          color: var(--gold);
+          font-size: 13px;
+          padding: 10px 22px;
+          border-radius: 9px;
+          opacity: 0.7;
+          transition: opacity 0.2s, border-color 0.2s;
+        }
+        .demo-btn:hover {
+          opacity: 1;
+          border-color: var(--gold);
         }
       `}</style>
     </main>
