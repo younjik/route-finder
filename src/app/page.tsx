@@ -234,6 +234,10 @@ export default function UploadPage() {
 
   // 카드 선택 → 모드 저장 후 모달 닫고 곧바로 생성
   function chooseMode(mode: "easy" | "hard") {
+    // [채점 담당자 참고] 선택된 난이도를 localStorage에 저장합니다.
+    //   채점 로직에서 localStorage.getItem("gradeMode")로 값을 꺼내 쓰세요.
+    //   - "easy" = 격려 모드 (강점을 먼저 짚고 후하게 평가)
+    //   - "hard" = 채찍 모드 (실전 압박 면접처럼 냉정하게 평가)
     localStorage.setItem("gradeMode", mode);
     setShowModeModal(false);
     handleGenerate();
