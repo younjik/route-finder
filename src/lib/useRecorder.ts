@@ -38,6 +38,8 @@ export function useRecorder() {
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mr.mimeType });
         streamRef.current?.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+        mediaRef.current = null;
         setRecording(false);
         resolve(blob);
       };
@@ -45,5 +47,14 @@ export function useRecorder() {
     });
   }, []);
 
-  return { recording, error, start, stop };
+  const abort = useCallback(() => {
+    const mr = mediaRef.current;
+    if (mr && mr.state !== "inactive") mr.stop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    mediaRef.current = null;
+    setRecording(false);
+  }, []);
+
+  return { recording, error, start, stop, abort };
 }

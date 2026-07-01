@@ -1,24 +1,36 @@
 :root {
   /* Arcana palette — amethyst violet + mystic rose + magenta glow */
-  --void: #241044;          /* 배경 베이스: 검정 대신 깊은 자수정 보라 */
+  --void: #241044; /* 배경 베이스: 검정 대신 깊은 자수정 보라 */
   --velvet: #2e1556;
   --velvet-2: #3c1d6e;
-  --gold: #d98ec9;          /* primary accent — 난초빛 로즈 (구 gold) */
-  --gold-bright: #f3b6e0;   /* bright accent — 밝은 핑크 */
-  --ember: #e0719f;         /* 로즈-마젠타 (녹음/개선 강조) */
-  --mist: #cabbe8;          /* 부드러운 라벤더 (보조 텍스트) */
-  --parchment: #f5ecff;     /* 거의 흰 라벤더 (본문 텍스트) */
+  --gold: #d98ec9; /* primary accent — 난초빛 로즈 (구 gold) */
+  --gold-bright: #f3b6e0; /* bright accent — 밝은 핑크 */
+  --ember: #e0719f; /* 로즈-마젠타 (녹음/개선 강조) */
+  --mist: #cabbe8; /* 부드러운 라벤더 (보조 텍스트) */
+  --parchment: #f5ecff; /* 거의 흰 라벤더 (본문 텍스트) */
   --ink: #34215c;
   --line: rgba(238, 160, 214, 0.34);
-  --line-soft: rgba(202, 187, 232, 0.20);
+  --line-soft: rgba(202, 187, 232, 0.2);
 
   --font-display: "Cormorant Garamond", "Nanum Myeongjo", serif;
   --font-body: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
 }
+@font-face {
+  font-family: "Renaissance Secret";
+  src: url("/fonts/renaissance-secret.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-html, body {
+html,
+body {
   overflow-x: hidden; /* 아치형 카드 full-vw 확장 시 가로 스크롤 방지 */
   color: var(--parchment);
   font-family: var(--font-body);
@@ -51,18 +63,24 @@ body::after {
 
 ::selection { background: var(--gold); color: var(--void); }
 
-a { color: var(--gold-bright); }
+a {
+  color: var(--gold-bright);
+}
 
 button {
   font-family: var(--font-body);
   cursor: pointer;
 }
 
-.serif { font-family: var(--font-display); }
+.serif {
+  font-family: var(--font-display);
+}
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     transition-duration: 0.001ms !important;
   }
@@ -80,11 +98,15 @@ button {
   inset: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(245,236,255,0.8), transparent),
-    radial-gradient(1px 1px at 70% 60%, rgba(243,182,224,0.6), transparent),
-    radial-gradient(1.5px 1.5px at 40% 80%, rgba(224,113,159,0.6), transparent),
-    radial-gradient(1px 1px at 85% 20%, rgba(245,236,255,0.6), transparent),
-    radial-gradient(1px 1px at 15% 70%, rgba(217,142,201,0.6), transparent),
-    radial-gradient(1px 1px at 55% 15%, rgba(245,236,255,0.5), transparent);
+    radial-gradient(1px 1px at 20% 30%, rgba(245, 236, 255, 0.8), transparent),
+    radial-gradient(1px 1px at 70% 60%, rgba(243, 182, 224, 0.6), transparent),
+    radial-gradient(
+      1.5px 1.5px at 40% 80%,
+      rgba(224, 113, 159, 0.6),
+      transparent
+    ),
+    radial-gradient(1px 1px at 85% 20%, rgba(245, 236, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 15% 70%, rgba(217, 142, 201, 0.6), transparent),
+    radial-gradient(1px 1px at 55% 15%, rgba(245, 236, 255, 0.5), transparent);
   z-index: 0;
 }
