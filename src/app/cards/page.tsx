@@ -17,7 +17,7 @@ export default function CardsPage() {
   const [saving, setSaving] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
-  const [isSpreading, setIsSpreading] = useState(false);
+  const [isDealing, setIsDealing] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const summaryRef = useRef<HTMLDivElement>(null);
   const spreadRef = useRef<HTMLElement>(null);
@@ -66,23 +66,28 @@ export default function CardsPage() {
   function handleReset() {
     if (isResetting) return;
     setActiveId(null);
-    // 즉시 뒷면으로 전환 (수집 중 카드가 앞면 보이지 않도록)
     setFlipped(new Set());
     setAnswers({});
     sessionStorage.removeItem("interview:answers");
     setIsResetting(true);
-    // Phase 1 (0-650ms): 카드들이 중앙 하단 덱으로 모임
+
+    // Phase 1 (1000ms): 왼쪽→오른쪽 순서로 덱에 수렴 (50ms 간격 × 9장 + 이동 500ms)
     setTimeout(() => {
-      // Phase 2 (650-1050ms): 덱 셔플
       setIsShuffling(true);
+
+      // Phase 2 (400ms): 덱 셔플
       setTimeout(() => {
-        // Phase 3: 덱에서 바로 아치로 펼쳐짐
-        setIsResetting(false);
         setIsShuffling(false);
-        setIsSpreading(true);
-        setTimeout(() => setIsSpreading(false), 700);
+        // is-dealing 먼저 적용 (덱 위치 유지 상태에서 transition 준비)
+        setIsDealing(true);
+        // 두 프레임 뒤에 is-resetting 해제 → 덱→아치 transition 발화
+        setTimeout(() => {
+          setIsResetting(false);
+          // 마지막 카드 도착까지 (55ms × 9 + 650ms = 1145ms)
+          setTimeout(() => setIsDealing(false), 1200);
+        }, 32);
       }, 400);
-    }, 650);
+    }, 1000);
   }
 
   function persistAnswers(map: Record<number, AnsweredCard>) {
@@ -209,7 +214,7 @@ export default function CardsPage() {
           <button
             className="reset-btn"
             onClick={handleReset}
-            disabled={isResetting}
+            disabled={isResetting || isDealing}
           >
             {isResetting ? "섞는 중…" : "↺ 다시 뽑기"}
           </button>
@@ -239,18 +244,20 @@ export default function CardsPage() {
       </div>
 
       <section className="spread" ref={spreadRef}>
-        <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isSpreading ? " is-spreading" : ""}`} key={resetKey}>
+        <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`} key={resetKey}>
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
           const angle = -65 + i * (130 / 9);
           const zIdx = Math.round(10 - Math.abs(i - 4.5));
           const deckRot = ((i - 4.5) * 2).toFixed(1);
+          const collectDelay = `${i * 50}ms`;
+          const dealDelay = `${i * 55}ms`;
           return (
             <div
               key={i}
               className={`card-slot${flipped.has(i) ? " is-flipped" : ""}`}
-              style={{ "--angle": `${angle.toFixed(1)}deg`, "--deck-rot": `${deckRot}deg`, "--slot-i": i, zIndex: zIdx } as React.CSSProperties}
+              style={{ "--angle": `${angle.toFixed(1)}deg`, "--deck-rot": `${deckRot}deg`, "--slot-i": i, "--collect-delay": collectDelay, "--deal-delay": dealDelay, zIndex: zIdx } as React.CSSProperties}
             >
               <TarotCard
                 arc={arc}
@@ -590,41 +597,41 @@ export default function CardsPage() {
           width: max(100%, calc(var(--R) * 1.9 + var(--card-w) + 60px));
         }
 
-        /* ── 리셋 애니메이션: Phase 1 — 카드가 중앙 하단 덱으로 모임 ── */
+        /* ── 리셋 Phase 1: 바깥 카드부터 순서대로 덱으로 수렴 (ease-in: 가속하며 모임) ── */
         .arch-content.is-resetting .card-slot {
           left: calc(50% - var(--card-w) / 2) !important;
-          bottom: 24px !important;
+          bottom: 20px !important;
           transform: rotate(var(--deck-rot)) !important;
           z-index: calc(var(--slot-i, 0) + 1) !important;
           transition:
-            left 0.55s cubic-bezier(0.4, 0, 0.6, 1),
-            bottom 0.55s cubic-bezier(0.4, 0, 0.6, 1),
-            transform 0.55s cubic-bezier(0.4, 0, 0.6, 1) !important;
+            left      0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
+            bottom    0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
+            transform 0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms) !important;
           pointer-events: none;
         }
 
-        /* Phase 3 — 덱에서 아치로 펼쳐짐 */
-        .arch-content.is-spreading .card-slot {
-          transition:
-            left 0.65s cubic-bezier(0.2, 0.8, 0.2, 1),
-            bottom 0.65s cubic-bezier(0.2, 0.8, 0.2, 1),
-            transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
-          pointer-events: none;
-        }
-
-        /* Phase 2 — 덱 셔플 흔들기 */
+        /* ── 리셋 Phase 2: 덱 셔플 ── */
         .arch-content.is-resetting.is-shuffling .card-slot {
           transition: none !important;
-          animation: deck-shuffle 0.38s ease-in-out !important;
+          animation: deck-shuffle 0.38s ease-in-out forwards !important;
         }
 
         @keyframes deck-shuffle {
-          0%   { transform: rotate(var(--deck-rot)) translateX(0); }
-          18%  { transform: rotate(var(--deck-rot)) translateX(-14px) rotate(-3deg); }
-          36%  { transform: rotate(var(--deck-rot)) translateX(12px) rotate(3deg); }
-          54%  { transform: rotate(var(--deck-rot)) translateX(-8px) rotate(-2deg); }
-          72%  { transform: rotate(var(--deck-rot)) translateX(6px) rotate(1deg); }
-          100% { transform: rotate(var(--deck-rot)) translateX(0); }
+          0%   { transform: rotate(var(--deck-rot)) translateX(0)     translateY(0); }
+          18%  { transform: rotate(calc(var(--deck-rot) - 10deg)) translateX(-20px) translateY(-10px); }
+          42%  { transform: rotate(calc(var(--deck-rot) +  8deg)) translateX( 17px) translateY( -5px); }
+          62%  { transform: rotate(calc(var(--deck-rot) -  5deg)) translateX(-10px) translateY( -2px); }
+          80%  { transform: rotate(calc(var(--deck-rot) +  2deg)) translateX(  6px) translateY(  0px); }
+          100% { transform: rotate(var(--deck-rot)) translateX(0)     translateY(0); }
+        }
+
+        /* ── 리셋 Phase 3: 덱 위치에서 아치로 분배 (ease-out: 빠르게 날아가 정착) ── */
+        .arch-content.is-dealing .card-slot {
+          transition:
+            left      0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms),
+            bottom    0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms),
+            transform 0.65s cubic-bezier(0.05, 0.85, 0.25, 1) var(--deal-delay, 0ms) !important;
+          pointer-events: none;
         }
 
         .card-slot {
