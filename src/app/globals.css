@@ -12,14 +12,21 @@
   --line: rgba(238, 160, 214, 0.34);
   --line-soft: rgba(202, 187, 232, 0.2);
 
-  --font-display: "Cormorant Garamond", "Nanum Myeongjo", serif;
-  --font-body: "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+  --font-display: "Omyu Pretty", "Cormorant Garamond", "Nanum Myeongjo", serif;
+  --font-body: "Omyu Pretty", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
 }
 @font-face {
   font-family: "Renaissance Secret";
   src: url("/fonts/renaissance-secret.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  /* 숫자(0-9)에만 적용되는 폰트 — unicode-range로 제한해 다른 글자는 기존 폰트를 그대로 사용 */
+  font-family: "Omyu Pretty";
+  src: url("/fonts/omyu%20pretty.ttf") format("truetype");
+  unicode-range: U+0030-0039;
   font-display: swap;
 }
 

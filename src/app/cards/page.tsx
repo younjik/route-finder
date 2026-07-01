@@ -309,8 +309,8 @@ export default function CardsPage() {
 
       <div className="intro-band">
         <div className="eyebrow">THE SPREAD</div>
-        <h1 className="serif">열 장의 카드가 당신을 기다립니다</h1>
-        <p>카드를 뒤집으면 질문이 드러납니다. 한 장씩 답해 보세요.</p>
+        <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
+        <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
         {data.keywords.length > 0 && (
           <div className="keywords">
             {data.keywords.map((k, i) => (

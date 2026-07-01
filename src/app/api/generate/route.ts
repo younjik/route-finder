@@ -51,10 +51,23 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
     const resumeFile = form.get("resume") as File | null;
     const jobFile = form.get("job") as File | null;
+    const keywordsRaw = form.get("keywords") as string | null;
 
-    if (!resumeFile && !jobFile) {
+    let userKeywords: string[] = [];
+    if (keywordsRaw) {
+      try {
+        const parsedKw = JSON.parse(keywordsRaw);
+        if (Array.isArray(parsedKw)) {
+          userKeywords = parsedKw
+            .filter((k) => typeof k === "string" && k.trim())
+            .map((k) => k.trim());
+        }
+      } catch { /* 무시 */ }
+    }
+
+    if (!resumeFile && !jobFile && userKeywords.length === 0) {
       return NextResponse.json(
-        { error: "자소서나 채용공고 중 하나 이상을 업로드해 주세요." },
+        { error: "자소서, 채용공고, 키워드 중 하나 이상을 입력해 주세요." },
         { status: 400 }
       );
     }
@@ -65,16 +78,23 @@ export async function POST(req: NextRequest) {
     // Claude 메시지 content 구성 (텍스트 + 이미지 혼합 지원)
     const content: Anthropic.MessageParam["content"] = [];
 
-    const sourceLabel =
-      resume && job ? "[자소서]와 [채용공고]" : resume ? "[자소서]" : "[채용공고]";
+    const sourceLabels = [
+      resume ? "[자소서]" : null,
+      job ? "[채용공고]" : null,
+      userKeywords.length > 0 ? "[희망 키워드]" : null,
+    ].filter(Boolean);
+    const sourceLabel = sourceLabels.join("와 ");
+    const hasDocs = !!(resume || job);
 
     content.push({
       type: "text",
       text:
         `당신은 한국 기업의 채용 면접관입니다. 아래의 ${sourceLabel}를 분석해 ` +
         "핵심 키워드를 추출하고, 실제 면접에서 나올 법한 한국어 예상 면접 질문 10개를 만드세요.\n\n" +
-        "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 동기 등). " +
-        "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n" +
+        "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 지원동기 등). " +
+        (hasDocs
+          ? "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n"
+          : "자소서·채용공고가 제공되지 않았으므로, 실제로 확인되지 않은 경력·수치·회사명 등은 절대 지어내지 말고, 아래 희망 키워드를 중심으로 일반적이지만 날카로운 면접 질문을 구성하세요.\n\n") +
         "각 질문마다 지원자가 답변을 준비할 때 참고할 '힌트'도 함께 만드세요. 응답 길이를 짧게 유지하기 위해 각 항목은 반드시 간결하게 작성하세요:\n" +
         "- keywords: 답변에 포함하면 좋은 핵심 키워드 정확히 3개 (짧은 단어/구)\n" +
         "- star: STAR 기법 가이드(situation/task/action/result 각 한 문장으로만, 무엇을 말하면 좋을지 안내)\n" +
@@ -105,6 +125,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    if (userKeywords.length > 0) {
+      content.push({
+        type: "text",
+        text:
+          `\n[희망 키워드]\n${userKeywords.join(", ")}\n` +
+          "지원자가 직접 고른 관심 질문 카테고리·키워드입니다. 10개의 질문에 이 키워드들이 최대한 고르게, 우선적으로 반영되도록 구성하세요.",
+      });
+    }
+
     const arcanaList = ARCANA.map((a, i) => `${i}: ${a.nameKo}(${a.name}) — ${a.hint}`).join("\n");
 
     content.push({
@@ -113,7 +142,7 @@ export async function POST(req: NextRequest) {
         "\n\n반드시 아래 JSON 형식으로만 응답하세요. 마크다운 코드펜스나 다른 설명 없이 JSON 객체 하나만 출력합니다.\n" +
         "10개의 질문은 아래 10장의 타로 카드 순서(index 0~9)에 1:1로 매핑하세요. 카드 테마와 질문 성격을 최대한 어울리게 배치하세요.\n" +
         "10개 중 정확히 5개는 difficulty를 \"advanced\"로, 나머지 5개는 \"normal\"로 설정하세요. " +
-        "\"advanced\" 질문은 지원자의 자소서·공고를 깊이 파고드는 날카로운 심화 질문으로 만드세요.\n\n" +
+        "\"advanced\" 질문은 제공된 자료(자소서·채용공고·희망 키워드)를 최대한 활용해 깊이 파고드는 날카로운 심화 질문으로 만드세요.\n\n" +
         `타로 카드:\n${arcanaList}\n\n` +
         "설명, 서론, 코드펜스 없이 JSON 한 덩어리만 출력하세요. 모든 문자열 값은 위에서 요청한 분량을 넘기지 마세요.\n\n" +
         `{
