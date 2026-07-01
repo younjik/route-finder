@@ -271,26 +271,28 @@ export function AnswerDrawer({
         <div className={`content-col${question.difficulty === "advanced" ? " advanced" : ""}`}>
           <div className="content-scroll">
             <div className="q-wrap">
-              <h2 className={`q-text serif${questionHidden ? " q-hidden" : ""}`}>
+              <h2 className={`q-text serif${questionHidden && phase !== "done" ? " q-hidden" : ""}`}>
                 {highlightKeywords(question.question, question.keywords ?? [])}
               </h2>
-              <button
-                type="button"
-                className="q-toggle"
-                onClick={() => setQuestionHidden((v) => !v)}
-              >
-                {questionHidden ? (
-                  <>
-                    <svg className="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.6 20.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 8 11 8a20.7 20.7 0 0 1-3.22 4.36M14.12 14.12a3 3 0 1 1-4.24-4.24" />
-                      <line x1="1" y1="1" x2="23" y2="23" />
-                    </svg>
-                    질문 보기
-                  </>
-                ) : (
-                  "질문 가리기"
-                )}
-              </button>
+              {phase !== "done" && (
+                <button
+                  type="button"
+                  className="q-toggle"
+                  onClick={() => setQuestionHidden((v) => !v)}
+                >
+                  {questionHidden ? (
+                    <>
+                      <svg className="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a20.6 20.6 0 0 1 5.06-5.94M9.9 4.24A10.4 10.4 0 0 1 12 4c7 0 11 8 11 8a20.7 20.7 0 0 1-3.22 4.36M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                      질문 보기
+                    </>
+                  ) : (
+                    "질문 가리기"
+                  )}
+                </button>
+              )}
             </div>
 
             {(error || recError) && (
@@ -379,9 +381,7 @@ export function AnswerDrawer({
                   </div>
                 </div>
                 <div className="summary">
-                  <span className="serif quote open">"</span>
                   {evaluation.summary}
-                  <span className="serif quote close">"</span>
                 </div>
                 {evaluation.suggestedAnswer && (
                   <details className="suggested">
@@ -396,7 +396,7 @@ export function AnswerDrawer({
               </div>
             )}
 
-            {hint && phase !== "done" && (
+            {hint && (phase === "intro" || phase === "prep" || phase === "recording") && (
               <div className="hint-panel">
                 <button
                   type="button"
@@ -1061,9 +1061,6 @@ export function AnswerDrawer({
           font-size: 14.5px; line-height: 1.7; color: var(--mist);
           border-left: 2px solid var(--gold); padding-left: 16px;
         }
-        .summary .quote { color: var(--gold); font-size: 28px; }
-        .summary .quote.open { margin-right: 4px; line-height: 0; }
-        .summary .quote.close { margin-left: 4px; line-height: 0.6; vertical-align: -6px; }
 
         /* ── 면접 힌트 ── */
         .hint-panel {
