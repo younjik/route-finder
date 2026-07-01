@@ -16,46 +16,53 @@ export async function POST(req: NextRequest) {
     const resumeFile = form.get("resume") as File | null;
     const jobFile = form.get("job") as File | null;
 
-    if (!resumeFile || !jobFile) {
+    if (!resumeFile && !jobFile) {
       return NextResponse.json(
-        { error: "자소서와 채용공고를 모두 업로드해 주세요." },
+        { error: "자소서나 채용공고 중 하나 이상을 업로드해 주세요." },
         { status: 400 }
       );
     }
 
-    const resume = await parseUpload(resumeFile);
-    const job = await parseUpload(jobFile);
+    const resume = resumeFile ? await parseUpload(resumeFile) : null;
+    const job = jobFile ? await parseUpload(jobFile) : null;
 
     // Claude 메시지 content 구성 (텍스트 + 이미지 혼합 지원)
     const content: Anthropic.MessageParam["content"] = [];
 
+    const sourceLabel =
+      resume && job ? "[자소서]와 [채용공고]" : resume ? "[자소서]" : "[채용공고]";
+
     content.push({
       type: "text",
       text:
-        "당신은 한국 기업의 채용 면접관입니다. 아래의 [자소서]와 [채용공고]를 분석해 " +
+        `당신은 한국 기업의 채용 면접관입니다. 아래의 ${sourceLabel}를 분석해 ` +
         "핵심 키워드를 추출하고, 실제 면접에서 나올 법한 한국어 예상 면접 질문 10개를 만드세요.\n\n" +
         "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 동기 등). " +
-        "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.",
+        "제공된 자료를 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.",
     });
 
-    content.push({ type: "text", text: "\n[자소서]\n" });
-    if (resume.text.trim()) {
-      content.push({ type: "text", text: resume.text.slice(0, 12000) });
-    } else if (resume.imageBase64) {
-      content.push({
-        type: "image",
-        source: { type: "base64", media_type: resume.mediaType as any, data: resume.imageBase64 },
-      });
+    if (resume) {
+      content.push({ type: "text", text: "\n[자소서]\n" });
+      if (resume.text.trim()) {
+        content.push({ type: "text", text: resume.text.slice(0, 12000) });
+      } else if (resume.imageBase64) {
+        content.push({
+          type: "image",
+          source: { type: "base64", media_type: resume.mediaType as any, data: resume.imageBase64 },
+        });
+      }
     }
 
-    content.push({ type: "text", text: "\n[채용공고]\n" });
-    if (job.text.trim()) {
-      content.push({ type: "text", text: job.text.slice(0, 12000) });
-    } else if (job.imageBase64) {
-      content.push({
-        type: "image",
-        source: { type: "base64", media_type: job.mediaType as any, data: job.imageBase64 },
-      });
+    if (job) {
+      content.push({ type: "text", text: "\n[채용공고]\n" });
+      if (job.text.trim()) {
+        content.push({ type: "text", text: job.text.slice(0, 12000) });
+      } else if (job.imageBase64) {
+        content.push({
+          type: "image",
+          source: { type: "base64", media_type: job.mediaType as any, data: job.imageBase64 },
+        });
+      }
     }
 
     const arcanaList = ARCANA.map((a, i) => `${i}: ${a.nameKo}(${a.name}) — ${a.hint}`).join("\n");
