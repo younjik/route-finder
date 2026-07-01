@@ -856,7 +856,7 @@ export default function CardsPage() {
         .summary-backdrop {
           position: fixed;
           inset: 0;
-          z-index: 60;
+          z-index: 500;
           background: rgba(7, 6, 14, 0.82);
           backdrop-filter: blur(6px);
           display: flex;
