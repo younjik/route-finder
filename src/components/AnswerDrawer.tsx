@@ -51,9 +51,11 @@ export function AnswerDrawer({
   onClose: () => void;
   onSaved: (card: AnsweredCard) => void;
 }) {
-  const { error: recError, start, stop, abort } = useRecorder();
-  const [phase, setPhase] = useState<Phase>(existing ? "done" : "intro");
+  const { error: recError, start, stop } = useRecorder();
+  const [phase, setPhase] = useState<Phase>(existing ? "done" : "prep");
   const [flipped, setFlipped] = useState(false);
+  const [sparkle, setSparkle] = useState(false);
+  const [questionHidden, setQuestionHidden] = useState(false);
   const [timer, setTimer] = useState(0);
   const [transcript, setTranscript] = useState(existing?.transcript ?? "");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(
@@ -68,10 +70,18 @@ export function AnswerDrawer({
 
   useEffect(() => {
     const t1 = setTimeout(() => setFlipped(true), 60);
-    // 카드를 오픈하자마자 답변 준비 타이머 자동 시작 (기존 답변이 없을 때만)
-    if (!existing) beginPrep();
-    return () => clearTimeout(t1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const t2 = setTimeout(() => setSparkle(true), 800);
+    const t3 = setTimeout(() => setSparkle(false), 1500);
+    if (!existing) {
+      setTimer(PREP_SECONDS);
+      intervalRef.current = setInterval(() => {
+        setTimer((t) => {
+          if (t <= 1) { clearTimer(); beginRecording(); return 0; }
+          return t - 1;
+        });
+      }, 1000);
+    }
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimer(); };
   }, []);
 
   useEffect(() => {
@@ -265,9 +275,17 @@ export function AnswerDrawer({
 
             {/* 헤더 아래 남은 공간에서 세로 가운데 정렬 */}
             <div className="card-body">
-              <h2 className="q-text serif">
-                {highlightKeywords(question.question, question.keywords ?? [])}
-              </h2>
+              <div className="q-wrap">
+                <h2 className={`q-text serif${questionHidden ? " q-hidden" : ""}`}>
+                  {highlightKeywords(question.question, question.keywords ?? [])}
+                </h2>
+                <button
+                  className="q-toggle"
+                  onClick={() => setQuestionHidden((v) => !v)}
+                >
+                  {questionHidden ? "👁 질문 보기" : "🙈 질문 가리기"}
+                </button>
+              </div>
 
               {(error || recError) && (
                 <div className="err">⚠ {error || recError}</div>
@@ -738,6 +756,13 @@ export function AnswerDrawer({
           letter-spacing: 0;
         }
 
+        .q-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
         .q-text {
           font-size: clamp(18px, 2.4vw, 23px);
           line-height: 1.6;
