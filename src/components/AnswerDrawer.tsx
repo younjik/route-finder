@@ -554,7 +554,6 @@ export function AnswerDrawer({
           border-radius: 18px;
           background: #14102b url("/타로 카드 뒷면.png") center center / cover
             no-repeat;
-          border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
         }
 
@@ -569,7 +568,6 @@ export function AnswerDrawer({
              확대 110% + 세로 위치 32%로 보정 (심화 카드와 동일 비율/위치) */
           background: #15122c url("/보라색 카드 앞면.png") center 32% / 110%
             no-repeat;
-          border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
           padding: 24px 24px 32px;
           overflow-y: auto;
@@ -612,9 +610,7 @@ export function AnswerDrawer({
               transparent 60%
             ),
             url("/앞면 수정.png") center 32% / 110% no-repeat;
-          border-color: rgba(201, 162, 75, 0.7);
           box-shadow:
-            0 0 0 1px rgba(201, 162, 75, 0.35),
             0 28px 70px rgba(201, 162, 75, 0.2),
             inset 0 1px 0 rgba(201, 162, 75, 0.15);
         }
