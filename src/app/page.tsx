@@ -78,6 +78,11 @@ function MultiFileSlot({
       <style jsx>{`
         .slot {
           position: relative;
+          flex: 1;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
           border: 1px solid var(--line);
           border-radius: 14px;
           text-align: center;
@@ -106,7 +111,7 @@ function MultiFileSlot({
           );
         }
         .slot-drop {
-          padding: 24px 24px;
+          padding: 16px 18px;
           cursor: pointer;
         }
         .slot-drop:hover {
@@ -114,7 +119,7 @@ function MultiFileSlot({
         }
         .slot-glyph {
           font-family: var(--font-display);
-          font-size: 34px;
+          font-size: 36px;
           color: var(--gold-bright);
           line-height: 1;
           margin-bottom: 10px;
@@ -124,12 +129,12 @@ function MultiFileSlot({
         }
         .slot-label {
           font-family: "Renaissance Secret", serif;
-          font-size: 19px;
+          font-size: 21px;
           letter-spacing: 0.02em;
           margin-bottom: 5px;
         }
         .slot-sub {
-          font-size: 12px;
+          font-size: 13px;
           color: var(--mist);
           word-break: break-all;
           padding: 0 8px;
@@ -574,6 +579,7 @@ export default function UploadPage() {
         </h1>
       </header>
 
+      <section className="upload-row">
       <section className="slots">
         <MultiFileSlot files={files} onAdd={addFiles} onRemove={removeFile} />
       </section>
@@ -621,11 +627,11 @@ export default function UploadPage() {
                 ))}
               </div>
             )}
-            <input
-              type="text"
+            <textarea
               className="kw-custom-input"
-              placeholder="예: IT 업계, 삼성전자, 도전정신 — 입력 후 Enter (여러 개 가능)"
+              placeholder={"예: IT 업계, 삼성전자, 도전정신\n입력 후 Enter (여러 개 가능)"}
               maxLength={1000}
+              rows={2}
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               onKeyDown={(e) => {
@@ -638,6 +644,7 @@ export default function UploadPage() {
             />
           </div>
         )}
+      </section>
       </section>
 
       {error && <div className="error">⚠ {error}</div>}
@@ -690,11 +697,24 @@ export default function UploadPage() {
           font-size: 15.5px;
           line-height: 1.7;
         }
+        .upload-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          align-items: stretch;
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        @media (max-width: 640px) {
+          .upload-row {
+            grid-template-columns: 1fr;
+          }
+        }
         .slots {
-          margin-bottom: 14px;
+          min-width: 0;
+          display: flex;
         }
         .kw-picker {
-          margin-bottom: 20px;
+          min-width: 0;
           padding: 20px 22px;
           border-radius: 14px;
           border: 1px solid var(--line);
@@ -754,10 +774,10 @@ export default function UploadPage() {
         .kw-custom-box {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 10px;
           margin-top: 12px;
-          padding: 10px 14px;
-          border-radius: 10px;
+          padding: 16px 18px;
+          border-radius: 12px;
           border: 1px solid var(--line);
           background: rgba(22, 19, 42, 0.5);
         }
@@ -796,8 +816,11 @@ export default function UploadPage() {
           border: none;
           background: transparent;
           color: var(--parchment);
-          font-size: 14px;
-          padding: 2px;
+          font-size: 13px;
+          line-height: 1.5;
+          font-family: inherit;
+          resize: none;
+          padding: 4px;
         }
         .kw-custom-input:focus {
           outline: none;
