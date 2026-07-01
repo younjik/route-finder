@@ -56,7 +56,10 @@ export function AnswerDrawer({
     const t1 = setTimeout(() => setFlipped(true), 60);
     const t2 = setTimeout(() => setSparkle(true), 800);
     const t3 = setTimeout(() => setSparkle(false), 1500);
+    // 카드를 오픈하자마자 답변 준비 타이머 자동 시작 (기존 답변이 없을 때만)
+    if (!existing) beginPrep();
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
