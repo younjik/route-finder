@@ -118,7 +118,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const ready = resume && job && !loading;
+  const ready = (resume || job) && !loading;
 
   function handleDemo() {
     sessionStorage.setItem("interview:generate", JSON.stringify(DEMO_DATA));
@@ -127,13 +127,13 @@ export default function UploadPage() {
   }
 
   async function handleGenerate() {
-    if (!resume || !job) return;
+    if (!resume && !job) return;
     setError(null);
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("resume", resume);
-      fd.append("job", job);
+      if (resume) fd.append("resume", resume);
+      if (job) fd.append("job", job);
       const res = await fetch("/api/generate", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "질문 생성 실패");
