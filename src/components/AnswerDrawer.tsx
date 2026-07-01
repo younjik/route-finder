@@ -396,7 +396,7 @@ export function AnswerDrawer({
               </div>
             )}
 
-            {hint && phase !== "done" && (
+            {hint && (phase === "intro" || phase === "prep" || phase === "recording") && (
               <div className="hint-panel">
                 <button
                   type="button"
