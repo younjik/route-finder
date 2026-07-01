@@ -447,7 +447,7 @@ export function AnswerDrawer({
         .backdrop {
           position: fixed;
           inset: 0;
-          z-index: 50;
+          z-index: 500;
           background: rgba(7, 6, 14, 0.78);
           backdrop-filter: blur(5px);
           display: flex;

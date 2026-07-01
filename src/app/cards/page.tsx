@@ -67,8 +67,11 @@ export default function CardsPage() {
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      setRotation((r) => clamp(r - delta * WHEEL_SENSITIVITY, -ROTATION_LIMIT, ROTATION_LIMIT));
+      const delta =
+        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      setRotation((r) =>
+        clamp(r - delta * WHEEL_SENSITIVITY, -ROTATION_LIMIT, ROTATION_LIMIT),
+      );
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
@@ -81,7 +84,13 @@ export default function CardsPage() {
       const deltaX = e.clientX - dragRef.current.startX;
       if (Math.abs(deltaX) > 4) dragRef.current.moved = true;
       const deltaDeg = (deltaX / ARC_RADIUS) * (180 / Math.PI);
-      setRotation(clamp(dragRef.current.startRotation + deltaDeg, -ROTATION_LIMIT, ROTATION_LIMIT));
+      setRotation(
+        clamp(
+          dragRef.current.startRotation + deltaDeg,
+          -ROTATION_LIMIT,
+          ROTATION_LIMIT,
+        ),
+      );
     };
     const onPointerUp = () => {
       setIsDragging(false);
@@ -96,7 +105,11 @@ export default function CardsPage() {
   }, [isDragging]);
 
   function handleSpreadPointerDown(e: React.PointerEvent) {
-    dragRef.current = { startX: e.clientX, startRotation: rotation, moved: false };
+    dragRef.current = {
+      startX: e.clientX,
+      startRotation: rotation,
+      moved: false,
+    };
     setIsDragging(true);
   }
 
@@ -129,7 +142,6 @@ export default function CardsPage() {
       setFlipped(flips);
     }
   }, [router]);
-
 
   function handleClose() {
     if (activeId !== null && !answers[activeId]) {
@@ -285,11 +297,6 @@ export default function CardsPage() {
         <button className="back-btn" onClick={() => router.push("/")}>
           ← 처음으로
         </button>
-        <div className="progress">
-          <span className="count">{answeredCount}</span>
-          <span className="slash">/ 10</span>
-          <span className="lbl">답변 완료</span>
-        </div>
         <div className="top-right">
           <button
             className="reset-btn"
@@ -308,58 +315,75 @@ export default function CardsPage() {
         </div>
       </header>
 
-      <div className="intro-band">
-        <div className="eyebrow">THE SPREAD</div>
-        <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
-        <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
-        {data.keywords.length > 0 && (
-          <div className="keywords">
-            {data.keywords.map((k, i) => (
-              <span className="kw" key={i}>
-                #{k}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <section
-        className={`spread${isDragging ? " is-dragging" : ""}`}
-        ref={spreadRef}
-        onPointerDown={handleSpreadPointerDown}
-        onClickCapture={handleSpreadClickCapture}
-      >
-        <div className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`} key={resetKey}>
-        {ARCANA.map((arc, i) => {
-          const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
-          const ans = answers[i];
-          const angle = -65 + i * (130 / 9) + rotation;
-          // 카드가 순서대로(왼쪽→오른쪽) 겹치도록 — 가운데 카드가 위로 튀어나오지 않게 함
-          const zIdx = i + 1;
-          const deckRot = ((i - 4.5) * 2).toFixed(1);
-          const collectDelay = `${i * 50}ms`;
-          const dealDelay = `${(9 - i) * 100}ms`;
-          return (
-            <div
-              key={i}
-              className={`card-slot${flipped.has(i) ? " is-flipped" : ""}`}
-              style={{ "--angle": `${angle.toFixed(1)}deg`, "--deck-rot": `${deckRot}deg`, "--slot-i": i, "--collect-delay": collectDelay, "--deal-delay": dealDelay, zIndex: zIdx } as React.CSSProperties}
-            >
-              <TarotCard
-                arc={arc}
-                index={i}
-                flipped={flipped.has(i)}
-                answered={!!ans}
-                advanced={q?.difficulty === "advanced"}
-                score={ans?.evaluation.score}
-                category={q?.category}
-                onClick={() => handleCardClick(q?.id ?? i)}
-              />
+      <div className="body-center">
+        <div className="intro-band">
+          <div className="eyebrow">ARCANA INTERVIEW</div>
+          <h1 className="serif">당신을 위한 질문이 모두 준비되었습니다.</h1>
+          <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
+          {data.keywords.length > 0 && (
+            <div className="keywords">
+              {data.keywords.map((k, i) => (
+                <span className="kw" key={i}>
+                  #{k}
+                </span>
+              ))}
             </div>
-          );
-        })}
+          )}
         </div>
-      </section>
+
+        <section
+          className={`spread${isDragging ? " is-dragging" : ""}`}
+          ref={spreadRef}
+          onPointerDown={handleSpreadPointerDown}
+          onClickCapture={handleSpreadClickCapture}
+        >
+          <div
+            className={`arch-content${isResetting ? " is-resetting" : ""}${isShuffling ? " is-shuffling" : ""}${isDealing ? " is-dealing" : ""}`}
+            key={resetKey}
+          >
+            {ARCANA.map((arc, i) => {
+              const q =
+                data.questions.find((x) => x.id === i) ?? data.questions[i];
+              const ans = answers[i];
+              const angle = -65 + i * (130 / 9) + rotation;
+              // 카드가 순서대로(왼쪽→오른쪽) 겹치도록 — 가운데 카드가 위로 튀어나오지 않게 함
+              // 답변 완료된 카드는 한 단계 뒤로 깔려 오른쪽(i+1) 카드에는 덮이지만
+              // 왼쪽 카드와의 원래 순서(자신이 위)는 그대로 유지
+              const zIdx = ans ? i : i + 1;
+              const deckRot = ((i - 4.5) * 2).toFixed(1);
+              const collectDelay = `${i * 50}ms`;
+              const dealDelay = `${(9 - i) * 100}ms`;
+              return (
+                <div
+                  key={i}
+                  className={`card-slot${flipped.has(i) ? " is-flipped" : ""}`}
+                  style={
+                    {
+                      "--angle": `${angle.toFixed(1)}deg`,
+                      "--deck-rot": `${deckRot}deg`,
+                      "--slot-i": i,
+                      "--collect-delay": collectDelay,
+                      "--deal-delay": dealDelay,
+                      zIndex: zIdx,
+                    } as React.CSSProperties
+                  }
+                >
+                  <TarotCard
+                    arc={arc}
+                    index={i}
+                    flipped={flipped.has(i)}
+                    answered={!!ans}
+                    advanced={q?.difficulty === "advanced"}
+                    score={ans?.evaluation.score}
+                    category={q?.category}
+                    onClick={() => handleCardClick(q?.id ?? i)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
 
       {/* 답변 드로어 */}
       {activeQuestion && (
@@ -412,24 +436,35 @@ export default function CardsPage() {
               <div className="cap-list">
                 {answeredList.map((a) => {
                   const isOpen = expandedIds.has(a.questionId);
-                  const category = data.questions.find((q) => q.id === a.questionId)?.category ?? "";
+                  const category =
+                    data.questions.find((q) => q.id === a.questionId)
+                      ?.category ?? "";
                   return (
-                    <div key={a.questionId} className={`cap-item${isOpen ? " open" : ""}`}>
+                    <div
+                      key={a.questionId}
+                      className={`cap-item${isOpen ? " open" : ""}`}
+                    >
                       <button
                         className="cap-header"
                         onClick={() => toggleAccordion(a.questionId)}
                         aria-expanded={isOpen}
                       >
                         <div className="cap-header-info">
-                          {category && <span className="cap-category">{category}</span>}
+                          <span className="cap-arcana serif">{a.arcanaKo}</span>
+                          {category && (
+                            <span className="cap-category">{category}</span>
+                          )}
                         </div>
-                        <span className={`cap-chevron${isOpen ? " up" : ""}`}>▾</span>
+                        <span className={`cap-chevron${isOpen ? " up" : ""}`}>
+                          ▾
+                        </span>
                       </button>
                       {isOpen && (
                         <div className="cap-body">
                           <div className="cap-score-row">
                             <span className="cap-score serif">
-                              {a.evaluation.score}<em>/10</em>
+                              {a.evaluation.score}
+                              <em>/10</em>
                             </span>
                             <div className="cap-score-bar">
                               <div
@@ -441,15 +476,21 @@ export default function CardsPage() {
                           <p className="cap-q">{a.question}</p>
                           <p className="cap-summary">{a.evaluation.summary}</p>
                           {a.evaluation.improvements[0] && (
-                            <p className="cap-tip">▸ {a.evaluation.improvements[0]}</p>
+                            <p className="cap-tip">
+                              ▸ {a.evaluation.improvements[0]}
+                            </p>
                           )}
                           {a.evaluation.suggestedAnswer && (
                             <div className="cap-suggested">
-                              <div className="cap-suggested-label">✦ 추천 답변 예시</div>
+                              <div className="cap-suggested-label">
+                                ✦ 추천 답변 예시
+                              </div>
                               <p className="cap-suggested-note">
                                 내가 말한 내용만을 바탕으로 재구성한 예시입니다.
                               </p>
-                              <p className="cap-suggested-text">{a.evaluation.suggestedAnswer}</p>
+                              <p className="cap-suggested-text">
+                                {a.evaluation.suggestedAnswer}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -479,16 +520,12 @@ export default function CardsPage() {
         }
         .top {
           flex-shrink: 0;
-          display: grid;
-          grid-template-columns: 1fr auto 1fr;
+          display: flex;
+          justify-content: space-between;
           align-items: center;
           margin-bottom: 10px;
         }
-        .top > .back-btn {
-          justify-self: start;
-        }
         .top-right {
-          justify-self: end;
           display: flex;
           align-items: center;
           gap: 8px;
@@ -535,28 +572,13 @@ export default function CardsPage() {
           opacity: 0.3;
           cursor: not-allowed;
         }
-        .progress {
+        .body-center {
+          flex: 1;
+          min-height: 0;
           display: flex;
-          align-items: baseline;
-          gap: 6px;
+          flex-direction: column;
+          justify-content: center;
         }
-        .progress .count {
-          font-family: var(--font-display);
-          font-size: 26px;
-          color: var(--gold-bright);
-          text-shadow: 0 0 16px rgba(243, 182, 224, 0.7);
-        }
-        .progress .slash {
-          color: var(--mist);
-          font-size: 15px;
-        }
-        .progress .lbl {
-          font-size: 12px;
-          color: var(--parchment);
-          margin-left: 4px;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-        }
-
         .intro-band {
           flex-shrink: 0;
           text-align: center;
@@ -652,56 +674,91 @@ export default function CardsPage() {
           animation-delay: calc(var(--i) * -2.8s);
         }
         /* 각 퍼프별 크기·위치 차별화 — 높이를 넉넉하게 */
-        .puff:nth-child(1) { width: 240px; height: 460px; left: -40px; }
-        .puff:nth-child(2) { width: 190px; height: 530px; left:  65px; }
-        .puff:nth-child(3) { width: 280px; height: 400px; left: -20px; }
-        .puff:nth-child(4) { width: 165px; height: 500px; left: 105px; }
-        .puff:nth-child(5) { width: 255px; height: 440px; left:  10px; }
-        .puff:nth-child(6) { width: 210px; height: 480px; left:  60px; }
+        .puff:nth-child(1) {
+          width: 240px;
+          height: 460px;
+          left: -40px;
+        }
+        .puff:nth-child(2) {
+          width: 190px;
+          height: 530px;
+          left: 65px;
+        }
+        .puff:nth-child(3) {
+          width: 280px;
+          height: 400px;
+          left: -20px;
+        }
+        .puff:nth-child(4) {
+          width: 165px;
+          height: 500px;
+          left: 105px;
+        }
+        .puff:nth-child(5) {
+          width: 255px;
+          height: 440px;
+          left: 10px;
+        }
+        .puff:nth-child(6) {
+          width: 210px;
+          height: 480px;
+          left: 60px;
+        }
 
         @keyframes smoke-rise {
-          0%   {
-            transform: translateY(0)      translateX(0px)   scaleX(0.7)  rotate(-4deg);
+          0% {
+            transform: translateY(0) translateX(0px) scaleX(0.7) rotate(-4deg);
             opacity: 0;
           }
-          6%   { opacity: 1; }
-          18%  {
-            transform: translateY(-15vh)  translateX(44px)  scaleX(0.85) rotate( 6deg);
+          6% {
+            opacity: 1;
           }
-          36%  {
-            transform: translateY(-33vh)  translateX(-48px) scaleX(1.1)  rotate(-6deg);
+          18% {
+            transform: translateY(-15vh) translateX(44px) scaleX(0.85)
+              rotate(6deg);
+          }
+          36% {
+            transform: translateY(-33vh) translateX(-48px) scaleX(1.1)
+              rotate(-6deg);
             opacity: 0.85;
           }
-          54%  {
-            transform: translateY(-52vh)  translateX(40px)  scaleX(1.4)  rotate( 5deg);
+          54% {
+            transform: translateY(-52vh) translateX(40px) scaleX(1.4)
+              rotate(5deg);
             opacity: 0.55;
           }
-          72%  {
-            transform: translateY(-72vh)  translateX(-34px) scaleX(1.7)  rotate(-4deg);
+          72% {
+            transform: translateY(-72vh) translateX(-34px) scaleX(1.7)
+              rotate(-4deg);
             opacity: 0.3;
           }
-          88%  {
-            transform: translateY(-92vh)  translateX(22px)  scaleX(1.95) rotate( 2deg);
+          88% {
+            transform: translateY(-92vh) translateX(22px) scaleX(1.95)
+              rotate(2deg);
             opacity: 0.1;
           }
           100% {
-            transform: translateY(-116vh) translateX(-10px) scaleX(2.2)  rotate(-1deg);
+            transform: translateY(-116vh) translateX(-10px) scaleX(2.2)
+              rotate(-1deg);
             opacity: 0;
           }
         }
 
         /* ── 원호형 회전 카드 배열 (휠/드래그로 부채 전체가 회전) ── */
         .spread {
-          --card-w: min(clamp(110px, 27dvh, 240px), 38vw);
-          --R: clamp(260px, 48dvh, 500px);
-          --d: clamp(130px, 25dvh, 230px);
-          flex: 1;
-          min-height: 0;
+          --card-w: min(clamp(155px, 35dvh, 310px), 47vw);
+          --R: clamp(270px, 50dvh, 520px);
+          --d: calc(var(--R) * 1.1);
+          flex: 0 0 auto;
           position: relative;
           width: 100vw;
           margin-left: calc(50% - 50vw);
-          /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백 */
-          height: calc(var(--R) - var(--d) + var(--card-w) * 1.5 + 30px);
+          /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백
+             R-d가 음수가 되면(카드를 많이 내렸을 때) 높이가 실제보다 작게 계산되어
+             문구가 아래로 쏠리므로 0 밑으로 내려가지 않도록 고정 */
+          height: calc(
+            max(0px, var(--R) - var(--d)) + var(--card-w) * 1.5 + 30px
+          );
           /* overflow를 여기서 잘라내면 호버 확대(scale) 시 카드 윗부분이 함께 잘림.
              극단 회전 시 카드가 화면 밖으로 나가는 것은 페이지 스크롤이 잠겨 있어
              뷰포트 자체가 걸러주므로 여기서 별도로 자를 필요가 없음 */
@@ -723,13 +780,14 @@ export default function CardsPage() {
         /* ── 리셋 Phase 1: 바깥 카드부터 순서대로 덱으로 수렴 (ease-in: 가속하며 모임) ── */
         .arch-content.is-resetting .card-slot {
           left: calc(50% - var(--card-w) / 2) !important;
-          bottom: 20px !important;
+          bottom: calc(var(--R) - var(--d)) !important;
           transform: rotate(var(--deck-rot)) !important;
           z-index: calc(var(--slot-i, 0) + 1) !important;
           transition:
-            left      0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
-            bottom    0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
-            transform 0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms) !important;
+            left 0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
+            bottom 0.5s cubic-bezier(0.55, 0, 1, 0.8) var(--collect-delay, 0ms),
+            transform 0.5s cubic-bezier(0.55, 0, 1, 0.8)
+              var(--collect-delay, 0ms) !important;
           pointer-events: none;
         }
 
@@ -740,20 +798,37 @@ export default function CardsPage() {
         }
 
         @keyframes deck-shuffle {
-          0%   { transform: rotate(var(--deck-rot)) translateX(0)     translateY(0); }
-          18%  { transform: rotate(calc(var(--deck-rot) - 10deg)) translateX(-20px) translateY(-10px); }
-          42%  { transform: rotate(calc(var(--deck-rot) +  8deg)) translateX( 17px) translateY( -5px); }
-          62%  { transform: rotate(calc(var(--deck-rot) -  5deg)) translateX(-10px) translateY( -2px); }
-          80%  { transform: rotate(calc(var(--deck-rot) +  2deg)) translateX(  6px) translateY(  0px); }
-          100% { transform: rotate(var(--deck-rot)) translateX(0)     translateY(0); }
+          0% {
+            transform: rotate(var(--deck-rot)) translateX(0) translateY(0);
+          }
+          18% {
+            transform: rotate(calc(var(--deck-rot) - 10deg)) translateX(-20px)
+              translateY(-10px);
+          }
+          42% {
+            transform: rotate(calc(var(--deck-rot) + 8deg)) translateX(17px)
+              translateY(-5px);
+          }
+          62% {
+            transform: rotate(calc(var(--deck-rot) - 5deg)) translateX(-10px)
+              translateY(-2px);
+          }
+          80% {
+            transform: rotate(calc(var(--deck-rot) + 2deg)) translateX(6px)
+              translateY(0px);
+          }
+          100% {
+            transform: rotate(var(--deck-rot)) translateX(0) translateY(0);
+          }
         }
 
         /* ── 리셋 Phase 3: 덱에서 아치로 한 장씩 분배 ── */
         .arch-content.is-dealing .card-slot {
           transition:
-            left      0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
-            bottom    0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
-            transform 0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms) !important;
+            left 0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
+            bottom 0.45s cubic-bezier(0.05, 0.9, 0.2, 1) var(--deal-delay, 0ms),
+            transform 0.45s cubic-bezier(0.05, 0.9, 0.2, 1)
+              var(--deal-delay, 0ms) !important;
           z-index: calc(var(--slot-i, 0) + 20) !important;
           pointer-events: none;
         }
@@ -777,15 +852,11 @@ export default function CardsPage() {
           transform: rotate(var(--angle)) translateY(-28px) scale(1.07) !important;
           z-index: 100 !important;
         }
-        .card-slot.is-flipped {
-          z-index: 50 !important;
-        }
-
         /* 결과 모달 */
         .summary-backdrop {
           position: fixed;
           inset: 0;
-          z-index: 60;
+          z-index: 500;
           background: rgba(7, 6, 14, 0.82);
           backdrop-filter: blur(6px);
           display: flex;
