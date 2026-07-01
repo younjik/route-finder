@@ -10,6 +10,42 @@ export const maxDuration = 60;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// max_tokens에 걸려 JSON이 중간에 잘렸을 때, 끝까지 완성된 질문 항목만 살려서 파싱한다.
+function parseTruncatedQuestions(raw: string): { keywords: string[]; questions: any[] } {
+  const qIdx = raw.indexOf('"questions"');
+  const arrStart = qIdx === -1 ? -1 : raw.indexOf("[", qIdx);
+  if (arrStart === -1) throw new Error("Claude 응답 파싱 실패");
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let lastObjEnd = -1;
+  for (let i = arrStart; i < raw.length; i++) {
+    const ch = raw[i];
+    if (inString) {
+      if (escape) escape = false;
+      else if (ch === "\\") escape = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) lastObjEnd = i;
+    }
+  }
+  if (lastObjEnd === -1) throw new Error("Claude 응답 파싱 실패");
+
+  const questions = JSON.parse(raw.slice(arrStart, lastObjEnd + 1) + "]");
+  let keywords: string[] = [];
+  const kwMatch = raw.match(/"keywords"\s*:\s*(\[[^\]]*\])/);
+  if (kwMatch) {
+    try { keywords = JSON.parse(kwMatch[1]); } catch { /* 무시 */ }
+  }
+  return { keywords, questions };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
@@ -36,10 +72,10 @@ export async function POST(req: NextRequest) {
         "핵심 키워드를 추출하고, 실제 면접에서 나올 법한 한국어 예상 면접 질문 10개를 만드세요.\n\n" +
         "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 동기 등). " +
         "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n" +
-        "각 질문마다 지원자가 답변을 준비할 때 참고할 '힌트'도 함께 만드세요. 힌트는 다음을 포함합니다:\n" +
-        "- keywords: 답변에 포함하면 좋은 핵심 키워드 3~5개 (자소서·공고 내용을 반영)\n" +
-        "- star: 그 질문에 맞춰 구체화한 STAR 기법 가이드(situation/task/action/result 각 1~2문장, 무엇을 말하면 좋을지 안내하는 문장으로 작성)\n" +
-        "- sampleAnswer: 실제 합격자 답변처럼 자연스러운 답변 예시 2~4문장 요약",
+        "각 질문마다 지원자가 답변을 준비할 때 참고할 '힌트'도 함께 만드세요. 응답 길이를 짧게 유지하기 위해 각 항목은 반드시 간결하게 작성하세요:\n" +
+        "- keywords: 답변에 포함하면 좋은 핵심 키워드 정확히 3개 (짧은 단어/구)\n" +
+        "- star: STAR 기법 가이드(situation/task/action/result 각 한 문장으로만, 무엇을 말하면 좋을지 안내)\n" +
+        "- sampleAnswer: 답변 예시 딱 2문장 요약",
     });
 
     content.push({ type: "text", text: "\n[자소서]\n" });
@@ -72,6 +108,7 @@ export async function POST(req: NextRequest) {
         "10개 중 정확히 5개는 difficulty를 \"advanced\"로, 나머지 5개는 \"normal\"로 설정하세요. " +
         "\"advanced\" 질문은 지원자의 자소서·공고를 깊이 파고드는 날카로운 심화 질문으로 만드세요.\n\n" +
         `타로 카드:\n${arcanaList}\n\n` +
+        "설명, 서론, 코드펜스 없이 JSON 한 덩어리만 출력하세요. 모든 문자열 값은 위에서 요청한 분량을 넘기지 마세요.\n\n" +
         `{
   "keywords": ["키워드1", "키워드2", ...],   // 6~10개
   "questions": [
@@ -83,12 +120,12 @@ export async function POST(req: NextRequest) {
       "hint": {
         "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"],
         "star": {
-          "situation": "어떤 상황·배경을 짚어야 하는지 안내",
-          "task": "본인이 맡았던 과제·목표를 어떻게 짚어야 하는지 안내",
-          "action": "구체적으로 어떤 행동·과정을 강조해야 하는지 안내",
-          "result": "어떤 결과·수치·배운 점을 강조해야 하는지 안내"
+          "situation": "한 문장 안내",
+          "task": "한 문장 안내",
+          "action": "한 문장 안내",
+          "result": "한 문장 안내"
         },
-        "sampleAnswer": "실제 답변처럼 자연스럽게 작성한 예시 답변 2~4문장"
+        "sampleAnswer": "예시 답변 2문장"
       }
     }
     // ... 총 10개, id 0부터 9까지, 각 질문마다 hint 포함
@@ -98,7 +135,7 @@ export async function POST(req: NextRequest) {
 
     const msg = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
-      max_tokens: 6000,
+      max_tokens: 8192,
       messages: [{ role: "user", content }],
     });
 
@@ -113,9 +150,14 @@ export async function POST(req: NextRequest) {
     try {
       parsed = JSON.parse(raw);
     } catch {
-      const m = raw.match(/\{[\s\S]*\}/);
-      if (!m) throw new Error("Claude 응답 파싱 실패");
-      parsed = JSON.parse(m[0]);
+      try {
+        const m = raw.match(/\{[\s\S]*\}/);
+        if (!m) throw new Error("no match");
+        parsed = JSON.parse(m[0]);
+      } catch {
+        // 응답이 max_tokens에 걸려 잘린 경우: 완성된 질문만 살려서 사용
+        parsed = parseTruncatedQuestions(raw);
+      }
     }
 
     const result: GenerateResult = {
