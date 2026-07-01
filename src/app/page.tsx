@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { GenerateResult } from "@/lib/types";
 
 function FileSlot({
@@ -206,13 +206,37 @@ export default function UploadPage() {
   const [job, setJob] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showModeModal, setShowModeModal] = useState(false);
 
   const ready = (resume || job) && !loading;
+
+  // 모달 열려 있을 때 ESC로 닫기 (생성 취소)
+  useEffect(() => {
+    if (!showModeModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowModeModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showModeModal]);
 
   function handleDemo() {
     sessionStorage.setItem("interview:generate", JSON.stringify(DEMO_DATA));
     sessionStorage.removeItem("interview:answers");
     router.push("/cards");
+  }
+
+  // 버튼 클릭 → 바로 생성하지 않고 난이도 선택 모달을 띄운다
+  function openModeModal() {
+    if (!resume && !job) return;
+    setShowModeModal(true);
+  }
+
+  // 카드 선택 → 모드 저장 후 모달 닫고 곧바로 생성
+  function chooseMode(mode: "easy" | "hard") {
+    localStorage.setItem("gradeMode", mode);
+    setShowModeModal(false);
+    handleGenerate();
   }
 
   async function handleGenerate() {
@@ -253,6 +277,42 @@ export default function UploadPage() {
         </div>
       )}
 
+      {showModeModal && (
+        <div
+          className="mode-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label="면접 난이도 선택"
+          onClick={() => setShowModeModal(false)}
+        >
+          <div className="mode-box" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mode-title serif">면접 난이도를 선택하세요</h2>
+            <div className="mode-cards">
+              <button
+                className="mode-card encourage"
+                onClick={() => chooseMode("easy")}
+              >
+                <div className="mode-glyph">✧</div>
+                <div className="mode-name serif">격려 모드</div>
+                <div className="mode-desc">
+                  강점을 먼저 짚고 후하게 평가합니다
+                </div>
+              </button>
+              <button
+                className="mode-card whip"
+                onClick={() => chooseMode("hard")}
+              >
+                <div className="mode-glyph">⚔</div>
+                <div className="mode-name serif">채찍 모드</div>
+                <div className="mode-desc">
+                  실전 압박 면접처럼 냉정하게 평가합니다
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="hero">
         <div className="eyebrow">ARCANA · INTERVIEW</div>
         <h1
@@ -287,7 +347,7 @@ export default function UploadPage() {
 
       {error && <div className="error">⚠ {error}</div>}
 
-      <button className="cta" disabled={!ready} onClick={handleGenerate}>
+      <button className="cta" disabled={!ready} onClick={openModeModal}>
         {loading ? (
           <span className="loading-text">카드를 펼치는 중…</span>
         ) : (
@@ -432,12 +492,11 @@ export default function UploadPage() {
           align-items: center;
           justify-content: center;
           gap: 34px;
-          background:
-            radial-gradient(
-              circle at 50% 42%,
-              rgba(60, 29, 110, 0.55),
-              rgba(11, 4, 28, 0.92) 70%
-            );
+          background: radial-gradient(
+            circle at 50% 42%,
+            rgba(60, 29, 110, 0.55),
+            rgba(11, 4, 28, 0.92) 70%
+          );
           backdrop-filter: blur(6px);
           animation: overlay-in 0.4s ease both;
         }
@@ -534,6 +593,97 @@ export default function UploadPage() {
           letter-spacing: 0.06em;
           color: var(--mist);
           opacity: 0.8;
+        }
+
+        /* ── 난이도 선택 모달 ── */
+        .mode-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 60;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: radial-gradient(
+            circle at 50% 42%,
+            rgba(60, 29, 110, 0.5),
+            rgba(11, 4, 28, 0.9) 70%
+          );
+          backdrop-filter: blur(6px);
+          animation: overlay-in 0.3s ease both;
+        }
+        .mode-box {
+          width: 100%;
+          max-width: 560px;
+          text-align: center;
+          animation: mode-rise 0.35s ease both;
+        }
+        @keyframes mode-rise {
+          from {
+            opacity: 0;
+            transform: translateY(14px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .mode-title {
+          font-size: 28px;
+          letter-spacing: 0.03em;
+          color: var(--parchment);
+          margin-bottom: 26px;
+        }
+        .mode-cards {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 18px;
+        }
+        @media (max-width: 520px) {
+          .mode-cards {
+            grid-template-columns: 1fr;
+          }
+        }
+        .mode-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          padding: 30px 22px;
+          border-radius: 16px;
+          border: 1px solid var(--line);
+          background: linear-gradient(160deg, var(--velvet-2), var(--ink));
+          color: var(--parchment);
+          text-align: center;
+          transition:
+            transform 0.22s ease,
+            border-color 0.22s ease,
+            box-shadow 0.22s ease;
+        }
+        .mode-card:hover {
+          transform: translateY(-4px);
+          border-color: var(--gold);
+          box-shadow:
+            0 16px 44px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(238, 160, 214, 0.2) inset;
+        }
+        .mode-glyph {
+          font-size: 40px;
+          line-height: 1;
+          color: var(--gold-bright);
+        }
+        .mode-card.whip .mode-glyph {
+          color: var(--ember);
+        }
+        .mode-name {
+          font-size: 22px;
+          letter-spacing: 0.02em;
+        }
+        .mode-desc {
+          font-size: 13px;
+          line-height: 1.6;
+          color: var(--mist);
+          padding: 0 4px;
         }
       `}</style>
     </main>
