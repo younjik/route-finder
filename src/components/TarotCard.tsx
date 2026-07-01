@@ -99,7 +99,7 @@ export function TarotCard({
         .front {
           transform: rotateY(180deg);
           /* 일반 질문 카드 — 원본 이미지 여백을 확대해 카드 테두리까지 꽉 채움 */
-          background: #15122c url('/보라색 카드 앞면.png') center center / 110% no-repeat;
+          background: #15122c url('/보라색 카드 앞면.png') 50% 38% / 119% 112% no-repeat;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -142,7 +142,7 @@ export function TarotCard({
         .card.advanced .front {
           background:
             radial-gradient(circle at 50% 30%, rgba(201,162,75,0.35), transparent 60%),
-            url('/앞면 수정.png') center center / 110% no-repeat;
+            url('/앞면 수정.png') 50% 38% / 119% 112% no-repeat;
           border-color: rgba(201,162,75,0.7);
           box-shadow:
             0 0 0 1px rgba(201,162,75,0.3),

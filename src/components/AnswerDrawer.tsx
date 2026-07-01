@@ -566,7 +566,7 @@ export function AnswerDrawer({
           border-radius: 18px;
           /* 일반 질문 카드 — 원본 이미지 여백(상 5%/하 8.3%)에 맞춰
              확대 110% + 세로 위치 32%로 보정 (심화 카드와 동일 비율/위치) */
-          background: #15122c url("/보라색 카드 앞면.png") center 32% / 110%
+          background: #15122c url("/보라색 카드 앞면.png") 50% 38% / 119% 112%
             no-repeat;
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
           padding: 24px 24px 32px;
@@ -609,7 +609,7 @@ export function AnswerDrawer({
               rgba(201, 162, 75, 0.12),
               transparent 60%
             ),
-            url("/앞면 수정.png") center 32% / 110% no-repeat;
+            url("/앞면 수정.png") 50% 38% / 119% 112% no-repeat;
           box-shadow:
             0 28px 70px rgba(201, 162, 75, 0.2),
             inset 0 1px 0 rgba(201, 162, 75, 0.15);
@@ -618,7 +618,7 @@ export function AnswerDrawer({
           font-size: 11px;
           letter-spacing: 0.22em;
           color: #1c1405;
-          background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+          background: #ffe8a0;
           padding: 3px 12px;
           border-radius: 99px;
           font-weight: 700;
@@ -628,7 +628,7 @@ export function AnswerDrawer({
           color: #ffe8a0;
         }
         .front-face.advanced .keyword-deco {
-          color: var(--gold-bright);
+          color: #ffe8a0;
           opacity: 0.8;
         }
         .front-face.advanced .divider-line {
