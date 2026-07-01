@@ -4,59 +4,78 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { GenerateResult } from "@/lib/types";
 
-function FileSlot({
-  label,
-  accept,
-  file,
-  onPick,
+function MultiFileSlot({
+  files,
+  onAdd,
+  onRemove,
 }: {
-  label: string;
-  accept: string;
-  file: File | null;
-  onPick: (f: File | null) => void;
+  files: File[];
+  onAdd: (files: File[]) => void;
+  onRemove: (index: number) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [drag, setDrag] = useState(false);
 
   return (
-    <div
-      className={`slot ${file ? "filled" : ""} ${drag ? "drag" : ""}`}
-      onClick={() => inputRef.current?.click()}
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDrag(true);
-      }}
-      onDragLeave={() => setDrag(false)}
-      onDrop={(e) => {
-        e.preventDefault();
-        setDrag(false);
-        if (e.dataTransfer.files?.[0]) onPick(e.dataTransfer.files[0]);
-      }}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
-      }}
-    >
-      <input
-        ref={inputRef}
-        type="file"
-        accept={accept}
-        hidden
-        onChange={(e) => onPick(e.target.files?.[0] ?? null)}
-      />
-      <div className="slot-glyph">{file ? "✓" : "+"}</div>
-      <div className="slot-label">{label}</div>
-      <div className="slot-sub">
-        {file ? file.name : "클릭 또는 드래그하여 업로드"}
+    <div className={`slot ${files.length > 0 ? "filled" : ""} ${drag ? "drag" : ""}`}>
+      <div
+        className="slot-drop"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          if (e.dataTransfer.files?.length) onAdd(Array.from(e.dataTransfer.files));
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") inputRef.current?.click();
+        }}
+      >
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,.docx,.png,.jpg,.jpeg"
+          multiple
+          hidden
+          onChange={(e) => {
+            if (e.target.files?.length) onAdd(Array.from(e.target.files));
+            e.target.value = "";
+          }}
+        />
+        <div className="slot-glyph">+</div>
+        <div className="slot-label">자소서 · 채용공고</div>
+        <div className="slot-sub">클릭 또는 드래그하여 업로드 (여러 파일 가능)</div>
       </div>
+
+      {files.length > 0 && (
+        <ul className="file-list">
+          {files.map((f, i) => (
+            <li key={`${f.name}-${i}`} className="file-item">
+              <span className="file-name">{f.name}</span>
+              <button
+                type="button"
+                className="file-remove"
+                onClick={() => onRemove(i)}
+                aria-label={`${f.name} 삭제`}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <style jsx>{`
         .slot {
           position: relative;
           border: 1px solid var(--line);
           border-radius: 14px;
-          padding: 34px 24px;
           text-align: center;
           background: linear-gradient(
             180deg,
@@ -64,14 +83,11 @@ function FileSlot({
             rgba(22, 19, 42, 0.35)
           );
           transition:
-            transform 0.25s ease,
             border-color 0.25s ease,
             box-shadow 0.25s ease;
           backdrop-filter: blur(2px);
         }
-        .slot:hover,
         .slot.drag {
-          transform: translateY(-3px);
           border-color: var(--gold);
           box-shadow:
             0 14px 40px rgba(0, 0, 0, 0.45),
@@ -84,6 +100,13 @@ function FileSlot({
             rgba(201, 162, 75, 0.12),
             rgba(22, 19, 42, 0.4)
           );
+        }
+        .slot-drop {
+          padding: 34px 24px;
+          cursor: pointer;
+        }
+        .slot-drop:hover {
+          transform: translateY(-2px);
         }
         .slot-glyph {
           font-family: var(--font-display);
@@ -103,6 +126,49 @@ function FileSlot({
           color: var(--mist);
           word-break: break-all;
           padding: 0 8px;
+        }
+        .file-list {
+          list-style: none;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          padding: 0 18px 18px;
+        }
+        .file-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          background: rgba(22, 19, 42, 0.55);
+          border: 1px solid var(--line-soft);
+          border-radius: 8px;
+          padding: 7px 8px 7px 14px;
+        }
+        .file-name {
+          font-size: 13px;
+          color: var(--parchment);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .file-remove {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: transparent;
+          border: 1px solid var(--line);
+          border-radius: 50%;
+          color: var(--mist);
+          font-size: 10px;
+          cursor: pointer;
+          transition: border-color 0.2s, color 0.2s;
+        }
+        .file-remove:hover {
+          border-color: var(--ember);
+          color: var(--ember);
         }
       `}</style>
     </div>
@@ -340,8 +406,7 @@ const KEYWORD_OPTIONS = ["직무역량", "경험", "인성", "조직적합성", 
 
 export default function UploadPage() {
   const router = useRouter();
-  const [resume, setResume] = useState<File | null>(null);
-  const [job, setJob] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [customOpen, setCustomOpen] = useState(false);
   const [customInput, setCustomInput] = useState("");
@@ -352,7 +417,15 @@ export default function UploadPage() {
 
   const effectiveKeywords = [...selectedKeywords, ...customKeywords];
 
-  const ready = (resume || job || effectiveKeywords.length > 0) && !loading;
+  const ready = (files.length > 0 || effectiveKeywords.length > 0) && !loading;
+
+  function addFiles(newFiles: File[]) {
+    setFiles((prev) => [...prev, ...newFiles]);
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   function toggleKeyword(k: string) {
     setSelectedKeywords((prev) =>
@@ -390,7 +463,7 @@ export default function UploadPage() {
 
   // 버튼 클릭 → 바로 생성하지 않고 난이도 선택 모달을 띄운다
   function openModeModal() {
-    if (!resume && !job && effectiveKeywords.length === 0) return;
+    if (files.length === 0 && effectiveKeywords.length === 0) return;
     setShowModeModal(true);
   }
 
@@ -406,13 +479,12 @@ export default function UploadPage() {
   }
 
   async function handleGenerate() {
-    if (!resume && !job && effectiveKeywords.length === 0) return;
+    if (files.length === 0 && effectiveKeywords.length === 0) return;
     setError(null);
     setLoading(true);
     try {
       const fd = new FormData();
-      if (resume) fd.append("resume", resume);
-      if (job) fd.append("job", job);
+      files.forEach((f) => fd.append("files", f));
       if (effectiveKeywords.length > 0)
         fd.append("keywords", JSON.stringify(effectiveKeywords));
       const res = await fetch("/api/generate", { method: "POST", body: fd });
@@ -501,22 +573,14 @@ export default function UploadPage() {
       </header>
 
       <section className="slots">
-        <FileSlot
-          label="자기소개서"
-          accept=".pdf,.docx"
-          file={resume}
-          onPick={setResume}
-        />
-        <FileSlot
-          label="채용공고"
-          accept=".pdf,.png,.jpg,.jpeg"
-          file={job}
-          onPick={setJob}
-        />
+        <MultiFileSlot files={files} onAdd={addFiles} onRemove={removeFile} />
       </section>
 
       <section className="kw-picker">
-        <div className="kw-picker-label">키워드 선택 (선택 사항)</div>
+        <div className="kw-picker-label">키워드 선택 (선택)</div>
+        <div className="kw-picker-sub">
+          산업군·회사 이름·원하는 인재상 등 무엇이든 입력해 보세요
+        </div>
         <div className="kw-chip-list">
           {KEYWORD_OPTIONS.map((k) => (
             <button
@@ -558,7 +622,7 @@ export default function UploadPage() {
             <input
               type="text"
               className="kw-custom-input"
-              placeholder="키워드 입력 후 Enter (여러 개 입력 가능)"
+              placeholder="예: IT 업계, 삼성전자, 도전정신 — 입력 후 Enter (여러 개 가능)"
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               onKeyDown={(e) => {
@@ -624,23 +688,32 @@ export default function UploadPage() {
           line-height: 1.7;
         }
         .slots {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 18px;
           margin-bottom: 28px;
-        }
-        @media (max-width: 560px) {
-          .slots {
-            grid-template-columns: 1fr;
-          }
         }
         .kw-picker {
           margin-bottom: 28px;
+          padding: 26px 24px;
+          border-radius: 14px;
+          border: 1px solid var(--line);
+          background: linear-gradient(
+            180deg,
+            rgba(31, 27, 58, 0.6),
+            rgba(22, 19, 42, 0.35)
+          );
+          backdrop-filter: blur(2px);
         }
         .kw-picker-label {
-          font-size: 13px;
+          font-family: "Renaissance Secret", serif;
+          font-size: 20px;
+          letter-spacing: 0.02em;
+          color: var(--gold-bright);
+          margin-bottom: 6px;
+          text-align: center;
+        }
+        .kw-picker-sub {
+          font-size: 12.5px;
           color: var(--mist);
-          margin-bottom: 12px;
+          margin-bottom: 16px;
           text-align: center;
         }
         .kw-chip-list {

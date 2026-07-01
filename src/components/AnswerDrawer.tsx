@@ -770,6 +770,8 @@ export function AnswerDrawer({
           color: var(--parchment);
           text-align: left;
           opacity: 0.95;
+          word-break: keep-all;
+          overflow-wrap: break-word;
           transition: filter 0.2s;
         }
         .q-text.q-hidden {

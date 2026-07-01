@@ -49,8 +49,10 @@ function parseTruncatedQuestions(raw: string): { keywords: string[]; questions: 
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
-    const resumeFile = form.get("resume") as File | null;
-    const jobFile = form.get("job") as File | null;
+    const uploadedFiles = form
+      .getAll("files")
+      .filter((f): f is File => f instanceof File)
+      .slice(0, 8); // 과도한 업로드 방지
     const keywordsRaw = form.get("keywords") as string | null;
 
     let userKeywords: string[] = [];
@@ -65,26 +67,26 @@ export async function POST(req: NextRequest) {
       } catch { /* 무시 */ }
     }
 
-    if (!resumeFile && !jobFile && userKeywords.length === 0) {
+    if (uploadedFiles.length === 0 && userKeywords.length === 0) {
       return NextResponse.json(
-        { error: "자소서, 채용공고, 키워드 중 하나 이상을 입력해 주세요." },
+        { error: "자소서·채용공고 파일이나 키워드 중 하나 이상을 입력해 주세요." },
         { status: 400 }
       );
     }
 
-    const resume = resumeFile ? await parseUpload(resumeFile) : null;
-    const job = jobFile ? await parseUpload(jobFile) : null;
+    const parsedFiles = await Promise.all(
+      uploadedFiles.map(async (f) => ({ name: f.name, parsed: await parseUpload(f) })),
+    );
 
     // Claude 메시지 content 구성 (텍스트 + 이미지 혼합 지원)
     const content: Anthropic.MessageParam["content"] = [];
 
+    const hasDocs = parsedFiles.length > 0;
     const sourceLabels = [
-      resume ? "[자소서]" : null,
-      job ? "[채용공고]" : null,
+      hasDocs ? "[업로드한 자료(자소서·채용공고 등)]" : null,
       userKeywords.length > 0 ? "[희망 키워드]" : null,
     ].filter(Boolean);
     const sourceLabel = sourceLabels.join("와 ");
-    const hasDocs = !!(resume || job);
 
     content.push({
       type: "text",
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
         "핵심 키워드를 추출하고, 실제 면접에서 나올 법한 한국어 예상 면접 질문 10개를 만드세요.\n\n" +
         "각 질문은 서로 다른 영역을 다루도록 하세요(직무역량, 경험, 인성, 조직적합성, 문제해결, 지원동기 등). " +
         (hasDocs
-          ? "지원자의 자소서 내용과 채용공고의 직무 요건을 구체적으로 반영해, 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n"
+          ? "업로드된 자료들 각각이 자소서인지 채용공고인지는 내용을 보고 스스로 판단하고, 그 내용을 구체적으로 반영해 두루뭉술하지 않고 날카로운 질문을 만드세요.\n\n"
           : "자소서·채용공고가 제공되지 않았으므로, 실제로 확인되지 않은 경력·수치·회사명 등은 절대 지어내지 말고, 아래 희망 키워드를 중심으로 일반적이지만 날카로운 면접 질문을 구성하세요.\n\n") +
         "각 질문마다 지원자가 답변을 준비할 때 참고할 '힌트'도 함께 만드세요. 응답 길이를 짧게 유지하기 위해 각 항목은 반드시 간결하게 작성하세요:\n" +
         "- keywords: 답변에 포함하면 좋은 핵심 키워드 정확히 3개 (짧은 단어/구)\n" +
@@ -101,26 +103,14 @@ export async function POST(req: NextRequest) {
         "- sampleAnswer: 답변 예시 딱 2문장 요약",
     });
 
-    if (resume) {
-      content.push({ type: "text", text: "\n[자소서]\n" });
-      if (resume.text.trim()) {
-        content.push({ type: "text", text: resume.text.slice(0, 12000) });
-      } else if (resume.imageBase64) {
+    for (const { name, parsed } of parsedFiles) {
+      content.push({ type: "text", text: `\n[업로드 자료: ${name}]\n` });
+      if (parsed.text.trim()) {
+        content.push({ type: "text", text: parsed.text.slice(0, 12000) });
+      } else if (parsed.imageBase64) {
         content.push({
           type: "image",
-          source: { type: "base64", media_type: resume.mediaType as any, data: resume.imageBase64 },
-        });
-      }
-    }
-
-    if (job) {
-      content.push({ type: "text", text: "\n[채용공고]\n" });
-      if (job.text.trim()) {
-        content.push({ type: "text", text: job.text.slice(0, 12000) });
-      } else if (job.imageBase64) {
-        content.push({
-          type: "image",
-          source: { type: "base64", media_type: job.mediaType as any, data: job.imageBase64 },
+          source: { type: "base64", media_type: parsed.mediaType as any, data: parsed.imageBase64 },
         });
       }
     }
@@ -130,7 +120,9 @@ export async function POST(req: NextRequest) {
         type: "text",
         text:
           `\n[희망 키워드]\n${userKeywords.join(", ")}\n` +
-          "지원자가 직접 고른 관심 질문 카테고리·키워드입니다. 10개의 질문에 이 키워드들이 최대한 고르게, 우선적으로 반영되도록 구성하세요.",
+          "지원자가 직접 입력한 키워드입니다. 질문 카테고리(직무역량, 인성 등)일 수도 있고, 산업군, 회사 이름, 원하는 인재상, 직무명 등 " +
+          "그 무엇이든 될 수 있습니다. 각 키워드의 성격을 스스로 판단해 10개의 질문에 자연스럽게 녹여내세요 " +
+          "(예: 회사 이름이면 그 회사·업계를 염두에 둔 질문으로, 인재상 키워드면 그 특성을 검증하는 질문으로 반영).",
       });
     }
 
