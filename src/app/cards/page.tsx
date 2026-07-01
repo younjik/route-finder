@@ -851,7 +851,7 @@ export default function CardsPage() {
           z-index: 100 !important;
         }
         .card-slot.is-flipped {
-          z-index: 50 !important;
+          z-index: 0 !important;
         }
 
         /* 결과 모달 */
