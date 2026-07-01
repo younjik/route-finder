@@ -287,14 +287,14 @@ export function AnswerDrawer({
         /* ── 3D flip wrapper ── */
         .card-wrap {
           perspective: 1400px;
-          /* 1:1.7 비율 기준 너비 (height = width * 1.7) */
-          width: min(400px, 94vw, calc((100dvh - 64px) / 1.7));
+          /* 바닥에 깔린 카드와 동일한 2:3 비율 기준 너비 (height = width * 1.5) */
+          width: min(400px, 94vw, calc((100dvh - 64px) / 1.5));
           flex-shrink: 0;
         }
 
         .card-inner {
           position: relative;
-          aspect-ratio: 1 / 1.7;
+          aspect-ratio: 2 / 3;
           max-height: calc(100dvh - 64px);
           transform-style: preserve-3d;
           transition: transform 0.78s cubic-bezier(0.4, 0.1, 0.2, 1);
@@ -320,9 +320,8 @@ export function AnswerDrawer({
           transform: rotateY(180deg);
           backface-visibility: hidden;
           border-radius: 18px;
-          background:
-            radial-gradient(700px 360px at 50% 0%, rgba(201,162,75,0.12), transparent 60%),
-            linear-gradient(180deg, #1a1633, #110e24);
+          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
+          background: #15122c url('/앞면 수정.png') center center / cover no-repeat;
           border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0,0,0,0.65);
           padding: 24px 24px 32px;
@@ -346,7 +345,7 @@ export function AnswerDrawer({
           background:
             radial-gradient(ellipse 80% 50% at 50% 0%, rgba(201,162,75,0.38), transparent 65%),
             radial-gradient(ellipse 60% 40% at 50% 100%, rgba(201,162,75,0.12), transparent 60%),
-            linear-gradient(170deg, #2b1f07, #1c1405, #110e04);
+            url('/앞면 수정.png') center center / cover no-repeat;
           border-color: rgba(201,162,75,0.7);
           box-shadow:
             0 0 0 1px rgba(201,162,75,0.35),

@@ -98,23 +98,14 @@ export function TarotCard({
         /* 앞면 */
         .front {
           transform: rotateY(180deg);
-          background:
-            radial-gradient(circle at 50% 30%, rgba(201,162,75,0.16), transparent 65%),
-            linear-gradient(170deg, #1f1b3a, #15122c);
+          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
+          background: #15122c url('/앞면 수정.png') center center / cover no-repeat;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           gap: 6px;
           padding: 10px;
-        }
-        .front::after {
-          content: "";
-          position: absolute;
-          inset: 6px;
-          border: 1px solid var(--line);
-          border-radius: 7px;
-          pointer-events: none;
         }
         .numeral {
           position: absolute;
@@ -151,14 +142,11 @@ export function TarotCard({
         .card.advanced .front {
           background:
             radial-gradient(circle at 50% 30%, rgba(201,162,75,0.35), transparent 60%),
-            linear-gradient(170deg, #2b1f07, #1a1205);
+            url('/앞면 수정.png') center center / cover no-repeat;
           border-color: rgba(201,162,75,0.7);
           box-shadow:
             0 0 0 1px rgba(201,162,75,0.3),
             0 10px 30px rgba(201,162,75,0.2);
-        }
-        .card.advanced .front::after {
-          border-color: rgba(201,162,75,0.35);
         }
         .card.advanced .glyph { color: #ffe8a0; }
         .card.advanced .name  { color: #f5e6c0; }
