@@ -54,7 +54,6 @@ export function AnswerDrawer({
   const { error: recError, start, stop } = useRecorder();
   const [phase, setPhase] = useState<Phase>(existing ? "done" : "prep");
   const [flipped, setFlipped] = useState(false);
-  const [sparkle, setSparkle] = useState(false);
   const [questionHidden, setQuestionHidden] = useState(false);
   const [timer, setTimer] = useState(0);
   const [transcript, setTranscript] = useState(existing?.transcript ?? "");
@@ -70,8 +69,6 @@ export function AnswerDrawer({
 
   useEffect(() => {
     const t1 = setTimeout(() => setFlipped(true), 60);
-    const t2 = setTimeout(() => setSparkle(true), 800);
-    const t3 = setTimeout(() => setSparkle(false), 1500);
     if (!existing) {
       setTimer(PREP_SECONDS);
       intervalRef.current = setInterval(() => {
@@ -81,7 +78,7 @@ export function AnswerDrawer({
         });
       }, 1000);
     }
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimer(); };
+    return () => { clearTimeout(t1); clearTimer(); };
   }, []);
 
   useEffect(() => {
@@ -196,6 +193,31 @@ export function AnswerDrawer({
     }
   }
 
+  // 테스트용: 마이크 녹음도, Claude 분석 API 호출도 없이 더미 결과 화면만 바로 확인
+  function skipToResultForTesting() {
+    clearTimer();
+    const dummyTranscript = "(테스트) 마이크 녹음 없이 결과 화면을 확인하기 위한 더미 답변입니다.";
+    const dummyEvaluation: Evaluation = {
+      score: 7,
+      strengths: ["(데모) 답변 구조가 명확합니다.", "(데모) 핵심 키워드를 잘 짚었습니다."],
+      improvements: ["(데모) 구체적인 수치나 사례를 더 추가하면 좋겠습니다.", "(데모) 결론을 조금 더 간결하게 정리해보세요."],
+      summary: "(데모) 이 결과는 Claude 분석 없이 생성된 테스트용 더미 데이터입니다.",
+      suggestedAnswer: "(데모) 실제 API 연동 시 이 자리에 답변 기반 추천 예시가 표시됩니다.",
+    };
+    setTranscript(dummyTranscript);
+    setEvaluation(dummyEvaluation);
+    setPhase("done");
+
+    onSaved({
+      questionId: question.id,
+      arcanaKo: question.arcanaKo,
+      question: question.question,
+      transcript: dummyTranscript,
+      evaluation: dummyEvaluation,
+      answeredAt: Date.now(),
+    });
+  }
+
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="split-wrap" onClick={(e) => e.stopPropagation()}>
@@ -204,15 +226,6 @@ export function AnswerDrawer({
         {/* ── 1열: 뽑힌 카드 ── */}
         <div className="card-col">
           <div className={`card-wrap${flipped ? " flipped" : ""}`}>
-            {/* ── 반짝이 효과: 플립 완료 직후 터짐 ── */}
-            {flipped && (
-              <div className="sparkle-ring" aria-hidden>
-                {(["✦","✧","✶","✦","✧","✦","✶","✧","✦","✧"] as const).map((ch, i) => (
-                  <span key={i} className={`sp sp${i}`}>{ch}</span>
-                ))}
-              </div>
-            )}
-
             <div className="card-inner">
               {/* ── 뒷면 ── */}
               <div className="back-face" aria-hidden>
@@ -225,7 +238,6 @@ export function AnswerDrawer({
               {/* ── 앞면: 카드 주제/키워드만 표시 (질문 본문은 우측 패널) ── */}
               <div className={`front-face${question.difficulty === "advanced" ? " advanced" : ""}`}>
                 <div className="card-header">
-                  <div className="arcana-name serif">{question.arcanaKo}</div>
                   <div className="divider-line" />
                   {question.difficulty === "advanced" && (
                     <div className="advanced-badge">✦ 심화 질문</div>
@@ -238,13 +250,6 @@ export function AnswerDrawer({
                     <span className="keyword serif">{question.category}</span>
                     <span className="keyword-deco"> —</span>
                   </div>
-                  {question.keywords && question.keywords.length > 0 && (
-                    <div className="card-kw-list">
-                      {question.keywords.slice(0, 6).map((k, i) => (
-                        <span className="card-kw" key={i}>#{k}</span>
-                      ))}
-                    </div>
-                  )}
                 </div>
                 <div className="divider-line" />
               </div>
@@ -323,6 +328,13 @@ export function AnswerDrawer({
                   </button>
                 </div>
               )}
+
+              {process.env.NODE_ENV !== "production" &&
+                (phase === "intro" || phase === "prep" || phase === "recording") && (
+                  <button className="dev-skip" onClick={skipToResultForTesting}>
+                    🧪 테스트: 마이크 없이 결과 화면 바로가기
+                  </button>
+                )}
 
             {(phase === "transcribing" || phase === "evaluating") && (
               <div className="stage">
@@ -483,8 +495,9 @@ export function AnswerDrawer({
 
         /* ── 1열: 뽑힌 카드 ── */
         .card-col {
-          flex: 0 0 30%;
-          max-width: 300px;
+          /* 카드 실제 크기(.card-wrap)에 맞춰 칼럼 너비도 자동으로 맞춤 —
+             고정 30%/300px로 두면 카드가 더 클 때 옆 칼럼과 겹침 */
+          flex: 0 0 auto;
           display: flex;
           align-items: flex-start;
           justify-content: center;
@@ -519,15 +532,6 @@ export function AnswerDrawer({
         .content-col.advanced .q-text { color: #f5e6c0; opacity: 1; }
         .content-col.advanced .stage-desc { color: rgba(245,230,192,0.7); }
         .content-col.advanced .stage-desc b { color: var(--gold-bright); }
-
-        /* ── 반짝이 ── */
-        .sparkle-ring {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          z-index: 20;
-          overflow: visible;
-        }
 
         /* ── 3D flip wrapper ── */
         .card-wrap {
@@ -582,7 +586,6 @@ export function AnswerDrawer({
           border-radius: 18px;
           background: #14102b url("/타로 카드 뒷면.png") center center / cover
             no-repeat;
-          border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
         }
 
@@ -593,10 +596,10 @@ export function AnswerDrawer({
           transform: rotateY(180deg);
           backface-visibility: hidden;
           border-radius: 18px;
-          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
-          background: #15122c url("/앞면 수정.png") center center / 110%
+          /* 일반 질문 카드 — 원본 이미지 여백(상 5%/하 8.3%)에 맞춰
+             확대 110% + 세로 위치 32%로 보정 (심화 카드와 동일 비율/위치) */
+          background: #15122c url("/보라색 카드 앞면.png") 50% 38% / 119% 112%
             no-repeat;
-          border: 1px solid var(--line);
           box-shadow: 0 28px 70px rgba(0, 0, 0, 0.65);
           padding: 24px 24px 32px;
           overflow-y: auto;
@@ -623,21 +626,7 @@ export function AnswerDrawer({
           color: var(--gold-bright);
           text-shadow: 0 0 30px rgba(201,162,75,0.5);
         }
-        .card-kw-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-          justify-content: center;
-        }
-        .card-kw {
-          font-size: 10.5px;
-          color: var(--mist);
-          border: 1px solid var(--line-soft);
-          padding: 3px 9px;
-          border-radius: 99px;
-        }
         .front-face.advanced .card-glyph { color: #ffe8a0; }
-        .front-face.advanced .card-kw { color: rgba(245,230,192,0.75); border-color: rgba(201,162,75,0.3); }
 
         /* ── 심화 질문 금색 카드 ── */
         .front-face.advanced {
@@ -652,10 +641,8 @@ export function AnswerDrawer({
               rgba(201, 162, 75, 0.12),
               transparent 60%
             ),
-            url("/앞면 수정.png") center center / 116% no-repeat;
-          border-color: rgba(201, 162, 75, 0.7);
+            url("/앞면 수정.png") 50% 38% / 119% 112% no-repeat;
           box-shadow:
-            0 0 0 1px rgba(201, 162, 75, 0.35),
             0 28px 70px rgba(201, 162, 75, 0.2),
             inset 0 1px 0 rgba(201, 162, 75, 0.15);
         }
@@ -663,21 +650,17 @@ export function AnswerDrawer({
           font-size: 11px;
           letter-spacing: 0.22em;
           color: #1c1405;
-          background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+          background: #ffe8a0;
           padding: 3px 12px;
           border-radius: 99px;
           font-weight: 700;
           box-shadow: 0 2px 10px rgba(201, 162, 75, 0.4);
         }
-        .front-face.advanced .arcana-name {
-          color: var(--gold-bright);
-          opacity: 1;
-        }
         .front-face.advanced .keyword {
           color: #ffe8a0;
         }
         .front-face.advanced .keyword-deco {
-          color: var(--gold-bright);
+          color: #ffe8a0;
           opacity: 0.8;
         }
         .front-face.advanced .divider-line {
@@ -716,13 +699,6 @@ export function AnswerDrawer({
           flex-direction: column;
           align-items: center;
           gap: 10px;
-        }
-        .arcana-name {
-          font-size: 13px;
-          letter-spacing: 0.28em;
-          color: var(--gold);
-          text-transform: uppercase;
-          opacity: 0.85;
         }
         .divider-line {
           width: 100%;
@@ -899,6 +875,22 @@ export function AnswerDrawer({
         }
         .ghost:hover {
           border-color: var(--gold);
+        }
+
+        /* 개발 중 테스트용 — 마이크 없이 결과로 바로가기 */
+        .dev-skip {
+          margin-top: 10px;
+          background: transparent;
+          border: 1px dashed rgba(224, 113, 159, 0.5);
+          color: var(--ember);
+          padding: 8px 16px;
+          border-radius: 8px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+        .dev-skip:hover {
+          border-color: var(--ember);
         }
 
         .spinner {

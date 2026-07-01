@@ -34,9 +34,6 @@ export function TarotCard({
         {/* 앞면 */}
         <div className="face front">
           <div className="numeral serif">{arc.numeral}</div>
-          {advanced && flipped && (
-            <div className="advanced-mark">✦ 심화</div>
-          )}
           <div className="glyph serif">{arc.glyph}</div>
           {flipped && category
             ? <div className="name serif category">{category}</div>
@@ -45,9 +42,6 @@ export function TarotCard({
                 <div className="name-en">{arc.name}</div>
               </>
           }
-          {answered && score != null && (
-            <div className="score-badge">{score}</div>
-          )}
         </div>
       </div>
 
@@ -98,8 +92,8 @@ export function TarotCard({
         /* 앞면 */
         .front {
           transform: rotateY(180deg);
-          /* 원본 이미지에 여백(비네트)이 있어 확대해 카드 테두리까지 꽉 채움 */
-          background: #15122c url('/앞면 수정.png') center center / 110% no-repeat;
+          /* 일반 질문 카드 — 원본 이미지 여백을 확대해 카드 테두리까지 꽉 채움 */
+          background: #15122c url('/보라색 카드 앞면.png') 50% 38% / 119% 112% no-repeat;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -142,7 +136,7 @@ export function TarotCard({
         .card.advanced .front {
           background:
             radial-gradient(circle at 50% 30%, rgba(201,162,75,0.35), transparent 60%),
-            url('/앞면 수정.png') center center / 110% no-repeat;
+            url('/앞면 수정.png') 50% 38% / 119% 112% no-repeat;
           border-color: rgba(201,162,75,0.7);
           box-shadow:
             0 0 0 1px rgba(201,162,75,0.3),
@@ -153,36 +147,6 @@ export function TarotCard({
         .card.advanced .name-en { color: rgba(245,230,192,0.55); }
         .card.advanced .numeral { color: var(--gold-bright); }
 
-        .advanced-mark {
-          position: absolute;
-          top: 10px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 8px;
-          letter-spacing: 0.18em;
-          color: #1c1405;
-          background: linear-gradient(135deg, var(--gold-bright), var(--gold));
-          padding: 2px 8px;
-          border-radius: 99px;
-          font-weight: 700;
-          white-space: nowrap;
-        }
-
-        .score-badge {
-          position: absolute;
-          bottom: 9px;
-          right: 9px;
-          width: 26px;
-          height: 26px;
-          border-radius: 50%;
-          background: var(--gold);
-          color: var(--void);
-          font-weight: 700;
-          font-size: 13px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
       `}</style>
     </button>
   );

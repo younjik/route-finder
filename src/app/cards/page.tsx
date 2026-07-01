@@ -147,6 +147,7 @@ export default function CardsPage() {
     setActiveId(null);
     setFlipped(new Set());
     setAnswers({});
+    setRotation(0);
     sessionStorage.removeItem("interview:answers");
     setIsResetting(true);
 
@@ -333,7 +334,8 @@ export default function CardsPage() {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
           const angle = -65 + i * (130 / 9) + rotation;
-          const zIdx = Math.round(10 - Math.abs(i - 4.5));
+          // 카드가 순서대로(왼쪽→오른쪽) 겹치도록 — 가운데 카드가 위로 튀어나오지 않게 함
+          const zIdx = i + 1;
           const deckRot = ((i - 4.5) * 2).toFixed(1);
           const collectDelay = `${i * 50}ms`;
           const dealDelay = `${(9 - i) * 100}ms`;
