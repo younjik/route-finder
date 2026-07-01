@@ -777,7 +777,7 @@ export default function CardsPage() {
         .spread {
           --card-w: min(clamp(155px, 35dvh, 310px), 47vw);
           --R: clamp(270px, 50dvh, 520px);
-          --d: calc(var(--R) * 1.5);
+          --d: calc(var(--R) * 1.1);
           flex: 0 0 auto;
           position: relative;
           width: 100vw;
@@ -785,7 +785,9 @@ export default function CardsPage() {
           /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백
              R-d가 음수가 되면(카드를 많이 내렸을 때) 높이가 실제보다 작게 계산되어
              문구가 아래로 쏠리므로 0 밑으로 내려가지 않도록 고정 */
-          height: calc(max(0px, var(--R) - var(--d)) + var(--card-w) * 1.5 + 30px);
+          height: calc(
+            max(0px, var(--R) - var(--d)) + var(--card-w) * 1.5 + 30px
+          );
           /* overflow를 여기서 잘라내면 호버 확대(scale) 시 카드 윗부분이 함께 잘림.
              극단 회전 시 카드가 화면 밖으로 나가는 것은 페이지 스크롤이 잠겨 있어
              뷰포트 자체가 걸러주므로 여기서 별도로 자를 필요가 없음 */
