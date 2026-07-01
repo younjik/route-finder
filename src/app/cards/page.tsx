@@ -31,6 +31,16 @@ export default function CardsPage() {
   const spreadRef = useRef<HTMLElement>(null);
   const dragRef = useRef({ startX: 0, startRotation: 0, moved: false });
   const suppressClickRef = useRef(false);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+
+  function toggleAccordion(id: number) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   // 이 페이지에 머무는 동안 문서 스크롤 자체를 잠금 — 아치 영역 밖에서
   // 휠/드래그를 해도 배경(페이지)이 밀려 내려가지 않도록.

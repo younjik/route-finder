@@ -195,7 +195,7 @@ export function AnswerDrawer({
         <div className="card-col">
           <div className={`card-wrap${flipped ? " flipped" : ""}`}>
             {/* ── 반짝이 효과: 플립 완료 직후 터짐 ── */}
-            {sparkle && (
+            {flipped && (
               <div className="sparkle-ring" aria-hidden>
                 {(["✦","✧","✶","✦","✧","✦","✶","✧","✦","✧"] as const).map((ch, i) => (
                   <span key={i} className={`sp sp${i}`}>{ch}</span>
@@ -296,11 +296,15 @@ export function AnswerDrawer({
                     바로 답변 시작 →
                   </button>
                 </div>
-                <button className="primary stop" onClick={finishRecording}>
-                  ■ 답변 마치기 &amp; 평가 받기
-                </button>
-              </div>
-            )}
+              )}
+
+              {phase === "recording" && (
+                <div className="stage">
+                  <button className="primary stop" onClick={finishRecording}>
+                    ■ 답변 마치기 &amp; 평가 받기
+                  </button>
+                </div>
+              )}
 
             {(phase === "transcribing" || phase === "evaluating") && (
               <div className="stage">
@@ -402,6 +406,7 @@ export function AnswerDrawer({
                 )}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
