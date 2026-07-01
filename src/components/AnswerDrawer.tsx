@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRecorder } from "@/lib/useRecorder";
 import type { InterviewQuestion, Evaluation, AnsweredCard } from "@/lib/types";
 
-type Phase = "intro" | "prep" | "recording" | "transcribing" | "evaluating" | "done";
+type Phase = "prep" | "recording" | "transcribing" | "evaluating" | "done";
 
 const PREP_SECONDS = 60;
 const MAX_RECORD_SECONDS = 120;
@@ -41,9 +41,10 @@ export function AnswerDrawer({
   onSaved: (card: AnsweredCard) => void;
 }) {
   const { error: recError, start, stop } = useRecorder();
-  const [phase, setPhase] = useState<Phase>(existing ? "done" : "intro");
+  const [phase, setPhase] = useState<Phase>(existing ? "done" : "prep");
   const [flipped, setFlipped] = useState(false);
   const [sparkle, setSparkle] = useState(false);
+  const [questionHidden, setQuestionHidden] = useState(false);
   const [timer, setTimer] = useState(0);
   const [transcript, setTranscript] = useState(existing?.transcript ?? "");
   const [evaluation, setEvaluation] = useState<Evaluation | null>(
@@ -56,7 +57,16 @@ export function AnswerDrawer({
     const t1 = setTimeout(() => setFlipped(true), 60);
     const t2 = setTimeout(() => setSparkle(true), 800);
     const t3 = setTimeout(() => setSparkle(false), 1500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    if (!existing) {
+      setTimer(PREP_SECONDS);
+      intervalRef.current = setInterval(() => {
+        setTimer((t) => {
+          if (t <= 1) { clearTimer(); beginRecording(); return 0; }
+          return t - 1;
+        });
+      }, 1000);
+    }
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimer(); };
   }, []);
 
   useEffect(() => {
@@ -73,18 +83,6 @@ export function AnswerDrawer({
   }
 
   useEffect(() => () => clearTimer(), []);
-
-  function beginPrep() {
-    setPhase("prep");
-    setTimer(PREP_SECONDS);
-    clearTimer();
-    intervalRef.current = setInterval(() => {
-      setTimer((t) => {
-        if (t <= 1) { clearTimer(); beginRecording(); return 0; }
-        return t - 1;
-      });
-    }, 1000);
-  }
 
   function skipPrep() { clearTimer(); beginRecording(); }
 
@@ -194,22 +192,20 @@ export function AnswerDrawer({
 
             {/* 헤더 아래 남은 공간에서 세로 가운데 정렬 */}
             <div className="card-body">
-              <h2 className="q-text serif">
-                {highlightKeywords(question.question, question.keywords ?? [])}
-              </h2>
+              <div className="q-wrap">
+                <h2 className={`q-text serif${questionHidden ? " q-hidden" : ""}`}>
+                  {highlightKeywords(question.question, question.keywords ?? [])}
+                </h2>
+                <button
+                  className="q-toggle"
+                  onClick={() => setQuestionHidden((v) => !v)}
+                >
+                  {questionHidden ? "👁 질문 보기" : "🙈 질문 가리기"}
+                </button>
+              </div>
 
               {(error || recError) && (
                 <div className="err">⚠ {error || recError}</div>
-              )}
-
-              {phase === "intro" && (
-                <div className="stage">
-                  <p className="stage-desc">
-                    준비 시간 <b>1분</b> 후 자동으로 녹음이 시작됩니다.<br />
-                    최대 <b>2분</b>까지 답변을 녹음할 수 있어요.
-                  </p>
-                  <button className="primary" onClick={beginPrep}>◷ 준비 시작</button>
-                </div>
               )}
 
               {phase === "prep" && (
@@ -509,13 +505,38 @@ export function AnswerDrawer({
           letter-spacing: 0;
         }
 
+        .q-wrap {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        }
         .q-text {
           font-size: clamp(14px, 2.8vw, 17px);
           line-height: 1.6;
-          margin-bottom: 20px;
           color: var(--parchment);
           text-align: center;
           opacity: 0.9;
+          transition: filter 0.3s;
+        }
+        .q-hidden {
+          filter: blur(8px);
+          user-select: none;
+        }
+        .q-toggle {
+          background: transparent;
+          border: 1px solid rgba(201, 162, 75, 0.3);
+          color: var(--mist);
+          font-size: 11.5px;
+          padding: 4px 13px;
+          border-radius: 99px;
+          cursor: pointer;
+          transition: border-color 0.2s, color 0.2s;
+        }
+        .q-toggle:hover {
+          border-color: var(--gold);
+          color: var(--gold-bright);
         }
         .q-text :global(.kw-mark) {
           background: none;

@@ -15,6 +15,8 @@ export default function CardsPage() {
   const [activeId, setActiveId] = useState<number | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
   const summaryRef = useRef<HTMLDivElement>(null);
   const spreadRef = useRef<HTMLElement>(null);
 
@@ -46,6 +48,31 @@ export default function CardsPage() {
       setFlipped(flips);
     }
   }, [router]);
+
+
+  function handleClose() {
+    if (activeId !== null && !answers[activeId]) {
+      setFlipped((prev) => {
+        const next = new Set(prev);
+        next.delete(activeId);
+        return next;
+      });
+    }
+    setActiveId(null);
+  }
+
+  function handleReset() {
+    if (isResetting) return;
+    setActiveId(null);
+    setIsResetting(true);
+    setTimeout(() => {
+      setFlipped(new Set());
+      setAnswers({});
+      sessionStorage.removeItem("interview:answers");
+      setIsResetting(false);
+      setResetKey((k) => k + 1);
+    }, 550);
+  }
 
   function persistAnswers(map: Record<number, AnsweredCard>) {
     sessionStorage.setItem(
@@ -167,13 +194,22 @@ export default function CardsPage() {
           <span className="slash">/ 10</span>
           <span className="lbl">답변 완료</span>
         </div>
-        <button
-          className="summary-btn"
-          disabled={answeredCount === 0}
-          onClick={() => setShowSummary(true)}
-        >
-          결과 보기
-        </button>
+        <div className="top-right">
+          <button
+            className="reset-btn"
+            onClick={handleReset}
+            disabled={isResetting}
+          >
+            {isResetting ? "섞는 중…" : "↺ 다시 뽑기"}
+          </button>
+          <button
+            className="summary-btn"
+            disabled={answeredCount === 0}
+            onClick={() => setShowSummary(true)}
+          >
+            결과 보기
+          </button>
+        </div>
       </header>
 
       <div className="intro-band">
@@ -192,7 +228,7 @@ export default function CardsPage() {
       </div>
 
       <section className="spread" ref={spreadRef}>
-        <div className="arch-content">
+        <div className={`arch-content${isResetting ? " is-resetting" : ""}`} key={resetKey}>
         {ARCANA.map((arc, i) => {
           const q = data.questions.find((x) => x.id === i) ?? data.questions[i];
           const ans = answers[i];
@@ -225,7 +261,7 @@ export default function CardsPage() {
         <AnswerDrawer
           question={activeQuestion}
           existing={answers[activeQuestion.id]}
-          onClose={() => setActiveId(null)}
+          onClose={handleClose}
           onSaved={handleSaved}
         />
       )}
@@ -298,15 +334,26 @@ export default function CardsPage() {
           z-index: 1;
           max-width: 1000px;
           margin: 0 auto;
-          padding: 22px 20px 80px;
+          padding: 16px 20px 0;
+          height: 100dvh;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
         }
         .top {
+          flex-shrink: 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          margin-bottom: 30px;
+          margin-bottom: 10px;
+        }
+        .top-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
         .back-btn,
+        .reset-btn,
         .summary-btn {
           background: rgba(18, 8, 40, 0.55);
           backdrop-filter: blur(10px);
@@ -322,9 +369,18 @@ export default function CardsPage() {
           text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
         }
         .back-btn:hover,
+        .reset-btn:hover:not(:disabled),
         .summary-btn:hover:not(:disabled) {
           border-color: var(--gold-bright);
           background: rgba(30, 12, 60, 0.7);
+        }
+        .reset-btn {
+          border-color: rgba(201, 162, 75, 0.45);
+          color: var(--gold);
+        }
+        .reset-btn:disabled {
+          opacity: 0.45;
+          cursor: not-allowed;
         }
         .summary-btn {
           color: #1a0530;
@@ -361,20 +417,21 @@ export default function CardsPage() {
         }
 
         .intro-band {
+          flex-shrink: 0;
           text-align: center;
-          margin-bottom: 38px;
+          margin-bottom: 10px;
         }
         .intro-band .eyebrow {
           font-size: 11px;
           letter-spacing: 0.4em;
           color: var(--gold-bright);
-          margin-bottom: 12px;
+          margin-bottom: 5px;
           text-shadow: 0 0 20px rgba(243, 182, 224, 0.8);
         }
         .intro-band h1 {
-          font-size: clamp(26px, 5vw, 40px);
+          font-size: clamp(18px, 3.5vw, 28px);
           font-weight: 600;
-          margin-bottom: 10px;
+          margin-bottom: 5px;
           text-shadow:
             0 0 60px rgba(243, 182, 224, 0.35),
             0 2px 4px rgba(0, 0, 0, 0.95),
@@ -382,15 +439,16 @@ export default function CardsPage() {
         }
         .intro-band p {
           color: #ddd0f5;
-          font-size: 14.5px;
+          font-size: 13px;
+          line-height: 1.5;
           text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
         }
         .keywords {
           display: flex;
           flex-wrap: wrap;
-          gap: 8px;
+          gap: 6px;
           justify-content: center;
-          margin-top: 18px;
+          margin-top: 8px;
         }
         .kw {
           font-size: 12px;
@@ -493,18 +551,19 @@ export default function CardsPage() {
 
         /* ── 원호형 스크롤 카드 배열 ── */
         .spread {
-          --card-w: min(240px, 42vw);
-          --R: 420px;   /* 원의 반지름 */
-          --d: 210px;   /* 원 중심 = 섹션 하단에서 d 아래 */
+          --card-w: min(clamp(110px, 27dvh, 240px), 38vw);
+          --R: clamp(260px, 48dvh, 500px);
+          --d: clamp(130px, 25dvh, 230px);
+          flex: 1;
+          min-height: 0;
           position: relative;
           width: 100vw;
           margin-left: calc(50% - 50vw);
-          /* 가운데 카드 전체가 보이도록 높이 확보: (R-d) + 카드높이 + 여백 */
-          height: calc(var(--R) - var(--d) + var(--card-w) * 1.5 + 30px);
+          height: auto;
           overflow-x: auto;
           overflow-y: hidden;
           scrollbar-width: none;
-          margin-bottom: 30px;
+          margin-bottom: 0;
         }
         .spread::-webkit-scrollbar { display: none; }
 
@@ -513,6 +572,14 @@ export default function CardsPage() {
           height: 100%;
           /* 좌우 끝 카드(±65°)가 잘리지 않을 최소 너비 */
           width: max(100%, calc(var(--R) * 1.9 + var(--card-w) + 60px));
+        }
+
+        /* ── 리셋 애니메이션 ── */
+        .arch-content.is-resetting .card-slot {
+          transition: opacity 0.45s ease-in, transform 0.45s ease-in !important;
+          opacity: 0 !important;
+          transform: rotate(var(--angle)) scale(0.15) !important;
+          pointer-events: none;
         }
 
         .card-slot {
@@ -527,7 +594,7 @@ export default function CardsPage() {
           transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .card-slot:hover {
-          transform: rotate(var(--angle)) translateY(-20px) scale(1.07) !important;
+          transform: rotate(var(--angle)) translateY(-28px) scale(1.07) !important;
           z-index: 100 !important;
         }
         .card-slot.is-flipped {
