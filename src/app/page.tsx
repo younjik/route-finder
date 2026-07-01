@@ -49,8 +49,12 @@ function MultiFileSlot({
           }}
         />
         <div className="slot-glyph">+</div>
-        <div className="slot-label">자소서 · 채용공고</div>
-        <div className="slot-sub">클릭 또는 드래그하여 업로드 (여러 파일 가능)</div>
+        {files.length === 0 && (
+          <>
+            <div className="slot-label">자소서 · 채용공고</div>
+            <div className="slot-sub">클릭 또는 드래그하여 업로드 (최대 5개)</div>
+          </>
+        )}
       </div>
 
       {files.length > 0 && (
@@ -102,7 +106,7 @@ function MultiFileSlot({
           );
         }
         .slot-drop {
-          padding: 34px 24px;
+          padding: 24px 24px;
           cursor: pointer;
         }
         .slot-drop:hover {
@@ -110,19 +114,22 @@ function MultiFileSlot({
         }
         .slot-glyph {
           font-family: var(--font-display);
-          font-size: 40px;
+          font-size: 34px;
           color: var(--gold-bright);
           line-height: 1;
-          margin-bottom: 14px;
+          margin-bottom: 10px;
+        }
+        .slot.filled .slot-glyph {
+          margin-bottom: 0;
         }
         .slot-label {
           font-family: "Renaissance Secret", serif;
-          font-size: 22px;
+          font-size: 19px;
           letter-spacing: 0.02em;
-          margin-bottom: 6px;
+          margin-bottom: 5px;
         }
         .slot-sub {
-          font-size: 13px;
+          font-size: 12px;
           color: var(--mist);
           word-break: break-all;
           padding: 0 8px;
@@ -419,8 +426,10 @@ export default function UploadPage() {
 
   const ready = (files.length > 0 || effectiveKeywords.length > 0) && !loading;
 
+  const MAX_FILES = 5;
+
   function addFiles(newFiles: File[]) {
-    setFiles((prev) => [...prev, ...newFiles]);
+    setFiles((prev) => [...prev, ...newFiles].slice(0, MAX_FILES));
   }
 
   function removeFile(index: number) {
@@ -512,7 +521,7 @@ export default function UploadPage() {
             <div className="tarot-card c4" />
             <div className="tarot-card c5" />
           </div>
-          <div className="load-title serif">카드를 섞는 중…</div>
+          <div className="load-title serif">운명을 점치는 중...</div>
           <div className="load-sub">질문을 뽑아내고 있습니다</div>
         </div>
       )}
@@ -526,7 +535,7 @@ export default function UploadPage() {
           onClick={() => setShowModeModal(false)}
         >
           <div className="mode-box" onClick={(e) => e.stopPropagation()}>
-            <h2 className="mode-title serif">면접 난이도를 선택하세요</h2>
+            <h2 className="mode-title serif">어떻게 피드백 해 드릴까요?</h2>
             <div className="mode-cards">
               <button
                 className="mode-card encourage"
@@ -577,7 +586,7 @@ export default function UploadPage() {
       </section>
 
       <section className="kw-picker">
-        <div className="kw-picker-label">키워드 선택 (선택)</div>
+        <div className="kw-picker-label">키워드 (선택)</div>
         <div className="kw-picker-sub">
           산업군·회사 이름·원하는 인재상 등 무엇이든 입력해 보세요
         </div>
@@ -623,6 +632,7 @@ export default function UploadPage() {
               type="text"
               className="kw-custom-input"
               placeholder="예: IT 업계, 삼성전자, 도전정신 — 입력 후 Enter (여러 개 가능)"
+              maxLength={1000}
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
               onKeyDown={(e) => {
@@ -688,11 +698,11 @@ export default function UploadPage() {
           line-height: 1.7;
         }
         .slots {
-          margin-bottom: 28px;
+          margin-bottom: 14px;
         }
         .kw-picker {
-          margin-bottom: 28px;
-          padding: 26px 24px;
+          margin-bottom: 20px;
+          padding: 20px 22px;
           border-radius: 14px;
           border: 1px solid var(--line);
           background: linear-gradient(
@@ -704,22 +714,22 @@ export default function UploadPage() {
         }
         .kw-picker-label {
           font-family: "Renaissance Secret", serif;
-          font-size: 20px;
+          font-size: 18px;
           letter-spacing: 0.02em;
           color: var(--gold-bright);
-          margin-bottom: 6px;
+          margin-bottom: 5px;
           text-align: center;
         }
         .kw-picker-sub {
-          font-size: 12.5px;
+          font-size: 12px;
           color: var(--mist);
-          margin-bottom: 16px;
+          margin-bottom: 14px;
           text-align: center;
         }
         .kw-chip-list {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
+          gap: 8px;
           justify-content: center;
         }
         .kw-chip {
@@ -730,9 +740,9 @@ export default function UploadPage() {
           );
           border: 1px solid var(--line);
           color: var(--mist);
-          padding: 9px 18px;
+          padding: 8px 16px;
           border-radius: 99px;
-          font-size: 13.5px;
+          font-size: 12.5px;
           transition:
             border-color 0.2s,
             color 0.2s,

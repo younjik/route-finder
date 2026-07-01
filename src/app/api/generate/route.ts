@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     const uploadedFiles = form
       .getAll("files")
       .filter((f): f is File => f instanceof File)
-      .slice(0, 8); // 과도한 업로드 방지
+      .slice(0, 5); // 프론트엔드 업로드 제한(최대 5개)과 동일
     const keywordsRaw = form.get("keywords") as string | null;
 
     let userKeywords: string[] = [];
