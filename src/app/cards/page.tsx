@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { ARCANA } from "@/lib/arcana";
 import { TarotCard } from "@/components/TarotCard";
 import { AnswerDrawer } from "@/components/AnswerDrawer";
-import type { GenerateResult, AnsweredCard } from "@/lib/types";
+import type { GenerateResult, AnsweredCard, InterviewQuestion } from "@/lib/types";
+import {
+  hasBackgroundJob,
+  onBackgroundError,
+  onBackgroundResult,
+} from "@/lib/backgroundGenerate";
 
 // 부채꼴 아치의 반지름 — CSS의 --R 값과 반드시 일치해야 함
 const ARC_RADIUS = 420;
@@ -19,7 +24,11 @@ function clamp(v: number, min: number, max: number) {
 
 export default function CardsPage() {
   const router = useRouter();
-  const [data, setData] = useState<GenerateResult | null>(null);
+  const [pageReady, setPageReady] = useState(false);
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [questionsById, setQuestionsById] = useState<Record<number, InterviewQuestion>>({});
+  const [genError, setGenError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
   const [answers, setAnswers] = useState<Record<number, AnsweredCard>>({});
   const [activeId, setActiveId] = useState<number | null>(null);
@@ -75,7 +84,7 @@ export default function CardsPage() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [data]);
+  }, [pageReady]);
 
   // 드래그 → 부채 전체 회전
   useEffect(() => {
@@ -121,14 +130,54 @@ export default function CardsPage() {
     }
   }
 
-  // 세션에서 데이터 로드
+  // 세션 데이터 로드 + 백그라운드로 생성 중인 나머지 질문 구독
+  // (최초 3장은 이미 생성되어 세션에 있고, 나머지 7장은 /cards 진입 후 백그라운드에서 채워짐)
   useEffect(() => {
+    const offResult = onBackgroundResult(({ questions }) => {
+      setQuestionsById((prev) => {
+        const next = { ...prev };
+        questions.forEach((q) => {
+          next[q.id] = q;
+        });
+        return next;
+      });
+      // 새로고침 대비 세션 캐시도 최신 상태로 갱신
+      try {
+        const raw = sessionStorage.getItem("interview:generate");
+        const cached: GenerateResult | null = raw ? JSON.parse(raw) : null;
+        const byId: Record<number, InterviewQuestion> = {};
+        (cached?.questions ?? []).forEach((q) => { byId[q.id] = q; });
+        questions.forEach((q) => { byId[q.id] = q; });
+        const merged = Object.values(byId).sort((a, b) => a.id - b.id);
+        sessionStorage.setItem(
+          "interview:generate",
+          JSON.stringify({ keywords: cached?.keywords ?? [], questions: merged }),
+        );
+      } catch { /* 무시 */ }
+    });
+    const offError = onBackgroundError((msg) => setGenError(msg));
+
     const raw = sessionStorage.getItem("interview:generate");
-    if (!raw) {
+    const cachedData: GenerateResult | null = raw ? JSON.parse(raw) : null;
+
+    if (!cachedData && !hasBackgroundJob()) {
       router.replace("/");
-      return;
+      return () => {
+        offResult();
+        offError();
+      };
     }
-    setData(JSON.parse(raw));
+
+    if (cachedData) {
+      setKeywords(cachedData.keywords ?? []);
+      const initial: Record<number, InterviewQuestion> = {};
+      cachedData.questions.forEach((q) => {
+        initial[q.id] = q;
+      });
+      setQuestionsById(initial);
+    }
+    setPageReady(true);
+
     const savedAns = sessionStorage.getItem("interview:answers");
     if (savedAns) {
       const arr: AnsweredCard[] = JSON.parse(savedAns);
@@ -141,6 +190,11 @@ export default function CardsPage() {
       setAnswers(map);
       setFlipped(flips);
     }
+
+    return () => {
+      offResult();
+      offError();
+    };
   }, [router]);
 
   function handleClose() {
@@ -190,9 +244,20 @@ export default function CardsPage() {
   }
 
   function handleCardClick(id: number) {
+    if (!questionsById[id]) {
+      setNotice("아직 질문을 준비하고 있어요. 잠시만 기다려 주세요…");
+      return;
+    }
     setFlipped((prev) => new Set(prev).add(id));
     setActiveId(id);
   }
+
+  // "아직 준비 중" 안내 메시지 잠시 후 자동으로 사라지게
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 3000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   function handleSaved(card: AnsweredCard) {
     setAnswers((prev) => {
@@ -223,7 +288,7 @@ export default function CardsPage() {
     }
   }
 
-  if (!data) {
+  if (!pageReady) {
     return (
       <main className="loading-page">
         <div className="spinner" />
@@ -268,7 +333,7 @@ export default function CardsPage() {
         ).toFixed(1)
       : "—";
 
-  const activeQuestion = data.questions.find((q) => q.id === activeId);
+  const activeQuestion = activeId !== null ? questionsById[activeId] : undefined;
 
   const PUFFS = [0, 1, 2, 3, 4, 5];
 
@@ -315,6 +380,14 @@ export default function CardsPage() {
         </div>
       </header>
 
+      {genError && (
+        <div className="gen-error">
+          ⚠ 맞춤 질문 생성에 실패했습니다: {genError} — 우선 기본 질문으로 계속 진행할 수 있어요.
+        </div>
+      )}
+
+      {notice && <div className="toast">{notice}</div>}
+
       <div className="body-center">
         <div className="intro-band">
           <div className="eyebrow">ARCANA INTERVIEW</div>
@@ -325,9 +398,9 @@ export default function CardsPage() {
             당신을 위한 질문이 모두 준비되었습니다.
           </h1>
           <p>가장 먼저 뒤집고 싶은 카드를 선택해 주세요.</p>
-          {data.keywords.length > 0 && (
+          {keywords.length > 0 && (
             <div className="keywords">
-              {data.keywords.map((k, i) => (
+              {keywords.map((k, i) => (
                 <span className="kw" key={i}>
                   #{k}
                 </span>
@@ -347,8 +420,7 @@ export default function CardsPage() {
             key={resetKey}
           >
             {ARCANA.map((arc, i) => {
-              const q =
-                data.questions.find((x) => x.id === i) ?? data.questions[i];
+              const q = questionsById[i];
               const ans = answers[i];
               const angle = -65 + i * (130 / 9) + rotation;
               // 카드가 순서대로(왼쪽→오른쪽) 겹치도록 — 가운데 카드가 위로 튀어나오지 않게 함
@@ -441,9 +513,7 @@ export default function CardsPage() {
               <div className="cap-list">
                 {answeredList.map((a) => {
                   const isOpen = expandedIds.has(a.questionId);
-                  const category =
-                    data.questions.find((q) => q.id === a.questionId)
-                      ?.category ?? "";
+                  const category = questionsById[a.questionId]?.category ?? "";
                   return (
                     <div
                       key={a.questionId}
@@ -576,6 +646,32 @@ export default function CardsPage() {
         .summary-btn:disabled {
           opacity: 0.3;
           cursor: not-allowed;
+        }
+        .gen-error {
+          flex-shrink: 0;
+          text-align: center;
+          font-size: 12.5px;
+          color: var(--ember);
+          background: rgba(194, 84, 58, 0.1);
+          border: 1px solid rgba(194, 84, 58, 0.3);
+          border-radius: 10px;
+          padding: 9px 14px;
+          margin-bottom: 10px;
+        }
+        .toast {
+          position: fixed;
+          left: 50%;
+          bottom: 32px;
+          transform: translateX(-50%);
+          z-index: 200;
+          background: rgba(18, 8, 40, 0.92);
+          border: 1px solid var(--line);
+          color: var(--parchment);
+          font-size: 13px;
+          padding: 12px 20px;
+          border-radius: 99px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+          animation: fade 0.2s ease;
         }
         .body-center {
           flex: 1;

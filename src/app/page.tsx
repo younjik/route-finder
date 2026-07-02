@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { GenerateResult } from "@/lib/types";
+import { startBackgroundGenerate } from "@/lib/backgroundGenerate";
+import { FIXED_QUESTION, FIXED_QUESTION_ID } from "@/lib/fixedQuestion";
 
 function MultiFileSlot({
   files,
@@ -416,6 +417,13 @@ const DEMO_DATA = {
 
 const KEYWORD_OPTIONS = ["직무역량", "경험", "인성", "조직적합성", "문제해결", "지원동기"];
 
+// 첫 질문(자기소개+지원동기)은 고정 질문을 즉시 사용하고, 나머지 9장은
+// "카드를 섞는 중" 로딩(최대 20초) 동안 백그라운드에서 생성을 시작한다.
+const BACKGROUND_IDS = Array.from({ length: 10 }, (_, i) => i).filter(
+  (i) => i !== FIXED_QUESTION_ID,
+);
+const LOADING_DURATION_MS = 20000;
+
 export default function UploadPage() {
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
@@ -423,9 +431,8 @@ export default function UploadPage() {
   const [customOpen, setCustomOpen] = useState(false);
   const [customInput, setCustomInput] = useState("");
   const [customKeywords, setCustomKeywords] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [showModeModal, setShowModeModal] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const effectiveKeywords = [...selectedKeywords, ...customKeywords];
 
@@ -492,27 +499,23 @@ export default function UploadPage() {
     handleGenerate();
   }
 
-  async function handleGenerate() {
+  // 첫 질문은 고정 질문으로 즉시 시작하고, 나머지 9장은 "카드를 섞는 중" 화면(최대 20초)
+  // 동안 백그라운드에서 생성을 시작한 뒤, 20초가 지나면 완료 여부와 상관없이 카드 화면으로 이동한다.
+  function handleGenerate() {
     if (files.length === 0 && effectiveKeywords.length === 0) return;
-    setError(null);
     setLoading(true);
-    try {
-      const fd = new FormData();
-      files.forEach((f) => fd.append("files", f));
-      if (effectiveKeywords.length > 0)
-        fd.append("keywords", JSON.stringify(effectiveKeywords));
-      const res = await fetch("/api/generate", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "질문 생성 실패");
 
-      const result = data as GenerateResult;
-      sessionStorage.setItem("interview:generate", JSON.stringify(result));
-      sessionStorage.removeItem("interview:answers");
+    sessionStorage.setItem(
+      "interview:generate",
+      JSON.stringify({ keywords: [], questions: [FIXED_QUESTION] }),
+    );
+    sessionStorage.removeItem("interview:answers");
+
+    startBackgroundGenerate(files, effectiveKeywords, BACKGROUND_IDS, 5);
+
+    setTimeout(() => {
       router.push("/cards");
-    } catch (e: any) {
-      setError(e.message);
-      setLoading(false);
-    }
+    }, LOADING_DURATION_MS);
   }
 
   return (
@@ -646,8 +649,6 @@ export default function UploadPage() {
         )}
       </section>
       </section>
-
-      {error && <div className="error">⚠ {error}</div>}
 
       <button className="cta" disabled={!ready} onClick={openModeModal}>
         {loading ? (
@@ -824,15 +825,6 @@ export default function UploadPage() {
         }
         .kw-custom-input:focus {
           outline: none;
-        }
-        .error {
-          color: var(--ember);
-          background: rgba(194, 84, 58, 0.1);
-          border: 1px solid rgba(194, 84, 58, 0.35);
-          border-radius: 10px;
-          padding: 12px 16px;
-          margin-bottom: 18px;
-          font-size: 14px;
         }
         .cta {
           width: 100%;
