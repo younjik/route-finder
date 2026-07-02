@@ -455,7 +455,6 @@ export default function CardsPage() {
                         aria-expanded={isOpen}
                       >
                         <div className="cap-header-info">
-                          <span className="cap-arcana serif">{a.arcanaKo}</span>
                           {category && (
                             <span className="cap-category">{category}</span>
                           )}
@@ -1003,14 +1002,16 @@ export default function CardsPage() {
           min-width: 0;
         }
         .cap-category {
-          font-size: 11px;
+          font-size: 14px;
+          font-weight: 700;
           color: #f8d0ef;
-          border: 1px solid rgba(238, 160, 214, 0.4);
-          padding: 3px 10px;
+          border: 1px solid rgba(238, 160, 214, 0.55);
+          padding: 5px 14px;
           border-radius: 99px;
-          background: rgba(238, 160, 214, 0.07);
+          background: rgba(238, 160, 214, 0.14);
           letter-spacing: 0.04em;
           white-space: nowrap;
+          text-shadow: 0 0 14px rgba(243, 182, 224, 0.5);
         }
         .cap-chevron {
           color: var(--mist);
